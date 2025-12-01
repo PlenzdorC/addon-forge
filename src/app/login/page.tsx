@@ -7,6 +7,7 @@ import { auth, db } from '@/lib/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { Loader2, LogIn, User } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Login() {
   const router = useRouter();

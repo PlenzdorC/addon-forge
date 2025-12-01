@@ -23,7 +23,7 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-screen flex flex-col wow-gradient`}>
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8">
-          {children}
+        {children}
         </main>
         <Footer />
         <CookieBanner />
