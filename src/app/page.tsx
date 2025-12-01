@@ -1,65 +1,127 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { collection, query, orderBy, onSnapshot, type QuerySnapshot, type DocumentData } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { AddonRequest, AddonCategory, RequestStatus } from '@/types';
+import RequestCard from '@/components/RequestCard';
+import FilterBar from '@/components/FilterBar';
+import { Loader2, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Home() {
+  const [requests, setRequests] = useState<AddonRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<AddonCategory | 'all'>('all');
+  const [selectedStatus, setSelectedStatus] = useState<RequestStatus | 'all'>('all');
+  const [sortBy, setSortBy] = useState<'recent' | 'popular' | 'oldest'>('recent');
+
+  useEffect(() => {
+    const q = query(collection(db, 'requests'), orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot: QuerySnapshot<DocumentData>) => {
+        const requestsData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as AddonRequest[];
+        setRequests(requestsData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error fetching requests:', error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Filter and sort requests
+  const filteredRequests = requests
+    .filter((request) => {
+      const matchesSearch =
+        request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || request.category === selectedCategory;
+      const matchesStatus = selectedStatus === 'all' || request.status === selectedStatus;
+      return matchesSearch && matchesCategory && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'popular') {
+        return b.upvotes - a.upvotes;
+      } else if (sortBy === 'oldest') {
+        return a.createdAt.seconds - b.createdAt.seconds;
+      }
+      return b.createdAt.seconds - a.createdAt.seconds;
+    });
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="max-w-6xl mx-auto">
+      {/* Hero Section */}
+      <div className="text-center mb-12">
+        <div className="flex items-center justify-center mb-4">
+          <Sparkles className="h-8 w-8 text-amber-400 mr-2" />
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+            AddOnForge
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+        </div>
+        <p className="text-xl text-slate-300 mb-6">
+          Community-Plattform für World of Warcraft AddOn-Anfragen
+        </p>
+        <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
+          Inspiriert von WeakAuras. Teile deine Ideen für AddOns, stimme für die besten Vorschläge
+          und verfolge den Entwicklungsfortschritt.
+        </p>
+        <Link href="/create" className="wow-button inline-block">
+          Neue Anfrage erstellen
+        </Link>
+      </div>
+
+      {/* Filter Bar */}
+      <FilterBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        selectedStatus={selectedStatus}
+        setSelectedStatus={setSelectedStatus}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+      />
+
+      {/* Results Count */}
+      <div className="mb-4">
+        <p className="text-slate-400">
+          {filteredRequests.length} {filteredRequests.length === 1 ? 'Anfrage' : 'Anfragen'} gefunden
+        </p>
+      </div>
+
+      {/* Requests List */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        </div>
+      ) : filteredRequests.length === 0 ? (
+        <div className="wow-card p-12 text-center">
+          <p className="text-slate-400 text-lg mb-4">
+            {searchQuery || selectedCategory !== 'all' || selectedStatus !== 'all'
+              ? 'Keine Anfragen gefunden. Versuche andere Filter.'
+              : 'Noch keine Anfragen vorhanden.'}
           </p>
+          <Link href="/create" className="wow-button inline-block">
+            Erste Anfrage erstellen
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      ) : (
+        <div className="space-y-4">
+          {filteredRequests.map((request) => (
+            <RequestCard key={request.id} request={request} />
+          ))}
         </div>
-      </main>
+      )}
     </div>
   );
 }

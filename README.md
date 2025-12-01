@@ -1,36 +1,207 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AddOnForge 🗡️
 
-## Getting Started
+Eine moderne Community-Plattform für World of Warcraft AddOn-Anfragen, inspiriert von WeakAuras.
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-15-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Firebase](https://img.shields.io/badge/Firebase-Latest-orange)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-cyan)
 
+## 🎮 Über das Projekt
+
+Mit der Ankündigung von World of Warcraft: Midnight und der Einstellung von WeakAuras entsteht eine Lücke in der WoW-Community. AddOnForge wurde geschaffen, um diese Lücke zu füllen und der Community eine Plattform zu bieten, auf der sie ihre AddOn-Wünsche teilen, diskutieren und deren Entwicklung verfolgen können.
+
+## ✨ Features
+
+- **Öffentliche Anfragen**: Alle AddOn-Anfragen sind öffentlich einsehbar
+- **Community-Voting**: Upvote-System für beliebte Anfragen
+- **Status-Tracking**: Verfolge den Entwicklungsfortschritt in Echtzeit
+- **Kommentare**: Diskutiere mit der Community über Anfragen
+- **Kategorien & Filter**: Finde schnell relevante AddOn-Anfragen
+- **Benutzer-Profile**: Verwalte deine eigenen Anfragen
+- **Responsive Design**: Funktioniert auf allen Geräten
+
+## 🚀 Technologie-Stack
+
+- **Frontend**: Next.js 15 mit React & TypeScript
+- **Styling**: Tailwind CSS mit WoW-inspiriertem Dark Theme
+- **Backend**: Firebase (Firestore, Authentication, Storage)
+- **Deployment**: Firebase Hosting (oder Vercel)
+
+## 📦 Installation
+
+1. **Repository klonen**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd addon-forge
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Dependencies installieren**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Firebase-Projekt erstellen**
+   - Gehe zu [Firebase Console](https://console.firebase.google.com/)
+   - Erstelle ein neues Projekt
+   - Aktiviere Firestore Database
+   - Aktiviere Authentication (Google Sign-In)
+   - Aktiviere Storage (optional für Screenshots)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. **Umgebungsvariablen konfigurieren**
+```bash
+cp .env.local.example .env.local
+```
 
-## Learn More
+Fülle die `.env.local` mit deinen Firebase-Credentials:
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+```
 
-To learn more about Next.js, take a look at the following resources:
+5. **Firestore-Regeln einrichten**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Gehe zur Firebase Console → Firestore Database → Regeln und füge folgende Regeln ein:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /requests/{requestId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && 
+                      (resource.data.userId == request.auth.uid || 
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true);
+    }
+    
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
 
-## Deploy on Vercel
+6. **Development Server starten**
+```bash
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Öffne [http://localhost:3000](http://localhost:3000) im Browser.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🏗️ Projekt-Struktur
+
+```
+addon-forge/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── page.tsx           # Hauptseite mit Anfragen-Übersicht
+│   │   ├── create/            # Neue Anfrage erstellen
+│   │   ├── request/[id]/      # Anfrage-Detailseite
+│   │   ├── login/             # Login-Seite
+│   │   ├── profile/           # Benutzer-Profil
+│   │   ├── about/             # Über uns
+│   │   ├── layout.tsx         # Root Layout
+│   │   └── globals.css        # Globale Styles
+│   ├── components/            # React-Komponenten
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   ├── RequestCard.tsx
+│   │   └── FilterBar.tsx
+│   ├── lib/                   # Utilities & Konfiguration
+│   │   ├── firebase.ts        # Firebase-Konfiguration
+│   │   └── utils.ts           # Hilfsfunktionen
+│   └── types/                 # TypeScript-Typen
+│       └── index.ts
+├── public/                    # Statische Assets
+├── .env.local.example        # Beispiel für Umgebungsvariablen
+└── package.json
+```
+
+## 🎨 Design
+
+Das Design ist inspiriert von World of Warcraft mit:
+- Dunklem Theme (Slate-Farben)
+- Gold/Gelb-Akzenten (WoW-typisch)
+- Modernen UI-Komponenten
+- Responsivem Layout
+- Smooth Animations
+
+## 🔥 Firebase-Setup
+
+### Firestore Collections
+
+**requests**
+```typescript
+{
+  id: string;
+  title: string;
+  description: string;
+  category: 'UI' | 'Combat' | 'Utility' | 'Social' | 'Profession' | 'Other';
+  status: 'requested' | 'in-progress' | 'completed' | 'rejected';
+  priority: 'low' | 'medium' | 'high';
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  userId: string;
+  userName: string;
+  upvotes: number;
+  upvotedBy: string[];
+  comments: Comment[];
+  tags?: string[];
+  githubRepo?: string;
+  downloadUrl?: string;
+}
+```
+
+### Authentication
+
+- Google Sign-In ist aktiviert
+- Weitere Provider können einfach hinzugefügt werden
+
+## 🚢 Deployment
+
+### Firebase Hosting
+
+```bash
+npm install -g firebase-tools
+firebase login
+firebase init hosting
+npm run build
+firebase deploy
+```
+
+### Vercel
+
+```bash
+npm install -g vercel
+vercel
+```
+
+## 🤝 Beitragen
+
+Contributions sind willkommen! Bitte erstelle einen Pull Request oder öffne ein Issue.
+
+## 📝 Lizenz
+
+MIT License - siehe LICENSE-Datei für Details.
+
+## 👨‍💻 Autor
+
+Entwickelt mit ❤️ für die WoW-Community
+
+## 🔗 Links
+
+- [World of Warcraft](https://worldofwarcraft.com/)
+- [Next.js Dokumentation](https://nextjs.org/docs)
+- [Firebase Dokumentation](https://firebase.google.com/docs)
+- [Tailwind CSS](https://tailwindcss.com/)
+
+---
+
+**Hinweis**: Dies ist ein Community-Projekt und steht in keiner Verbindung zu Blizzard Entertainment.
