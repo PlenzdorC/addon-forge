@@ -235,11 +235,15 @@ export default function Login() {
 
         <div className="mt-6 text-center text-sm text-slate-400">
           <p>
-            Durch die Anmeldung stimmst du unseren{' '}
-            <a href="#" className="text-amber-400 hover:underline">
-              Nutzungsbedingungen
-            </a>{' '}
-            zu.
+            Durch die Anmeldung stimmst du unserer{' '}
+            <Link href="/privacy" className="text-amber-400 hover:underline">
+              Datenschutzerklärung
+            </Link>
+            {' '}zu. Weitere Infos im{' '}
+            <Link href="/imprint" className="text-amber-400 hover:underline">
+              Impressum
+            </Link>
+            .
           </p>
         </div>
       </div>

@@ -7,7 +7,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-slate-700/50 bg-slate-900/50 mt-auto">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* About */}
           <div>
             <h3 className="text-lg font-semibold text-amber-400 mb-3">
@@ -52,23 +52,31 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Community */}
+          {/* Legal */}
           <div>
             <h3 className="text-lg font-semibold text-amber-400 mb-3">
-              Community
+              Rechtliches
             </h3>
-            <div className="flex items-center space-x-4">
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
-                title="GitHub"
-              >
-                <Github className="h-5 w-5 text-slate-400" />
-              </a>
-            </div>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/imprint"
+                  className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
+                >
+                  Impressum
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/privacy"
+                  className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
+                >
+                  Datenschutz
+                </Link>
+              </li>
+            </ul>
           </div>
+
         </div>
 
         <div className="mt-8 pt-6 border-t border-slate-700/50">
