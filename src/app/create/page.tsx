@@ -83,7 +83,8 @@ export default function CreateRequest() {
       }
 
       const docRef = await addDoc(collection(db, 'requests'), requestData);
-      router.push(`/request/${docRef.id}`);
+      // Redirect to success page with A/B testing
+      router.push(`/request-success?id=${docRef.id}`);
     } catch (err) {
       console.error('Error creating request:', err);
       setError('Fehler beim Erstellen der Anfrage. Bitte versuche es erneut.');

@@ -7,7 +7,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-slate-700/50 bg-slate-900/50 mt-auto">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* About */}
           <div>
             <h3 className="text-lg font-semibold text-amber-400 mb-3">
@@ -73,6 +73,33 @@ export default function Footer() {
                 >
                   Datenschutz
                 </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div>
+            <h3 className="text-lg font-semibold text-amber-400 mb-3">
+              Unterstützung
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/support"
+                  className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
+                >
+                  Unterstütze uns
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="https://buymeacoffee.com/nxmsz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-1"
+                >
+                  Buy Me a Coffee ☕
+                </a>
               </li>
             </ul>
           </div>

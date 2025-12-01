@@ -97,6 +97,14 @@ export default function Header() {
           >
             Über uns
           </Link>
+          <Link
+            href="/support"
+            className={`text-sm font-medium transition-colors hover:text-amber-400 ${
+              isActive('/support') ? 'text-amber-400' : 'text-slate-300'
+            }`}
+          >
+            ☕ Unterstützen
+          </Link>
           {user && (
             <Link
               href="/settings"
