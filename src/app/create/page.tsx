@@ -46,6 +46,13 @@ export default function CreateRequest() {
     setSubmitting(true);
 
     try {
+      // Get user's display name from Firestore
+      const { doc, getDoc } = await import('firebase/firestore');
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userName = userDoc.exists() 
+        ? userDoc.data()?.displayName || user.displayName || 'Anonymous'
+        : user.displayName || 'Anonymous';
+
       const tagsArray = formData.tags
         .split(',')
         .map((tag) => tag.trim())
@@ -60,7 +67,7 @@ export default function CreateRequest() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         userId: user.uid,
-        userName: user.displayName || 'Anonymous',
+        userName: userName,
         userAvatar: user.photoURL || undefined,
         upvotes: 0,
         upvotedBy: [],

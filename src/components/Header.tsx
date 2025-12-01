@@ -13,17 +13,33 @@ export default function Header() {
   const pathname = usePathname();
   const [user, loading] = useAuthState(auth);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [displayName, setDisplayName] = useState('');
 
   useEffect(() => {
-    const checkAdmin = async () => {
+    const checkAdminAndGetName = async () => {
       if (user) {
+        // Ensure user document exists
+        const { ensureUserDocument } = await import('@/lib/admin');
+        await ensureUserDocument(user);
+        
         const adminStatus = await isUserAdmin(user);
         setIsAdmin(adminStatus);
+        
+        // Get display name from Firestore
+        const { doc, getDoc } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase');
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setDisplayName(userDoc.data()?.displayName || user.displayName || 'User');
+        } else {
+          setDisplayName(user.displayName || 'User');
+        }
       } else {
         setIsAdmin(false);
+        setDisplayName('');
       }
     };
-    checkAdmin();
+    checkAdminAndGetName();
   }, [user]);
 
   const handleSignOut = async () => {
@@ -81,6 +97,16 @@ export default function Header() {
           >
             Über uns
           </Link>
+          {user && (
+            <Link
+              href="/settings"
+              className={`text-sm font-medium transition-colors hover:text-amber-400 ${
+                isActive('/settings') ? 'text-amber-400' : 'text-slate-300'
+              }`}
+            >
+              Einstellungen
+            </Link>
+          )}
           {isAdmin && (
             <Link
               href="/admin"
@@ -107,7 +133,7 @@ export default function Header() {
                 {user.photoURL ? (
                   <img
                     src={user.photoURL}
-                    alt={user.displayName || 'User'}
+                    alt={displayName || 'User'}
                     className="h-8 w-8 rounded-full border-2 border-amber-500"
                   />
                 ) : (
@@ -116,7 +142,7 @@ export default function Header() {
                   </div>
                 )}
                 <span className="hidden md:block text-sm text-slate-300">
-                  {user.displayName || 'User'}
+                  {displayName || 'User'}
                 </span>
               </Link>
               <button

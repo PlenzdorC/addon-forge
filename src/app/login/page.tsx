@@ -1,24 +1,27 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { Loader2, LogIn } from 'lucide-react';
-import { useState } from 'react';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { Loader2, LogIn, User } from 'lucide-react';
 
 export default function Login() {
   const router = useRouter();
   const [user, loading] = useAuthState(auth);
   const [signingIn, setSigningIn] = useState(false);
+  const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const [tempUser, setTempUser] = useState<any>(null);
 
   useEffect(() => {
-    if (user) {
+    if (user && !showUsernamePrompt) {
       router.push('/');
     }
-  }, [user, router]);
+  }, [user, router, showUsernamePrompt]);
 
   const handleGoogleSignIn = async () => {
     setSigningIn(true);
@@ -26,11 +29,73 @@ export default function Login() {
 
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      // User will be redirected by the useEffect above
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if user document exists
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      if (!userDoc.exists()) {
+        // New user - show username prompt
+        setTempUser(user);
+        setUsername(user.displayName || '');
+        setShowUsernamePrompt(true);
+        setSigningIn(false);
+      } else {
+        // Existing user - redirect
+        // Make sure displayName exists, if not use Google name
+        if (!userDoc.data()?.displayName) {
+          await setDoc(doc(db, 'users', user.uid), {
+            ...userDoc.data(),
+            displayName: user.displayName || 'User',
+          }, { merge: true });
+        }
+        router.push('/');
+      }
     } catch (err: any) {
       console.error('Error signing in:', err);
       setError(err.message || 'Fehler beim Anmelden. Bitte versuche es erneut.');
+      setSigningIn(false);
+    }
+  };
+
+  const handleUsernameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!username.trim()) {
+      setError('Bitte gib einen Benutzernamen ein.');
+      return;
+    }
+
+    if (username.trim().length < 3) {
+      setError('Der Benutzername muss mindestens 3 Zeichen lang sein.');
+      return;
+    }
+
+    if (username.trim().length > 20) {
+      setError('Der Benutzername darf maximal 20 Zeichen lang sein.');
+      return;
+    }
+
+    setSigningIn(true);
+    setError('');
+
+    try {
+      // Create user document with custom username
+      await setDoc(doc(db, 'users', tempUser.uid), {
+        uid: tempUser.uid,
+        email: tempUser.email,
+        displayName: username.trim(),
+        photoURL: tempUser.photoURL || null,
+        isAdmin: false,
+        createdAt: serverTimestamp(),
+      });
+
+      // Redirect to home
+      router.push('/');
+    } catch (err: any) {
+      console.error('Error creating user:', err);
+      setError('Fehler beim Erstellen des Profils. Bitte versuche es erneut.');
       setSigningIn(false);
     }
   };
@@ -43,6 +108,75 @@ export default function Login() {
     );
   }
 
+  // Username prompt for new users
+  if (showUsernamePrompt) {
+    return (
+      <div className="max-w-md mx-auto">
+        <div className="wow-card p-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-full mb-4">
+              <User className="h-8 w-8 text-slate-900" />
+            </div>
+            <h1 className="text-3xl font-bold text-slate-100 mb-2">Willkommen!</h1>
+            <p className="text-slate-400">
+              Wähle einen Benutzernamen für dein Profil
+            </p>
+          </div>
+
+          <form onSubmit={handleUsernameSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-slate-300 mb-2">
+                Benutzername
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="z.B. DragonSlayer"
+                className="wow-input w-full"
+                maxLength={20}
+                autoFocus
+                disabled={signingIn}
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                {username.length}/20 Zeichen (min. 3)
+              </p>
+            </div>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4">
+                <p className="text-red-400 text-sm">{error}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={signingIn || !username.trim()}
+              className="w-full wow-button disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {signingIn ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin inline mr-2" />
+                  Wird erstellt...
+                </>
+              ) : (
+                'Profil erstellen'
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-slate-400">
+            <p>
+              Dieser Name wird öffentlich angezeigt und kann später in den Einstellungen geändert werden.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Login screen
   return (
     <div className="max-w-md mx-auto">
       <div className="wow-card p-8">
@@ -112,4 +246,3 @@ export default function Login() {
     </div>
   );
 }
-

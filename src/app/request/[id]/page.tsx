@@ -102,14 +102,22 @@ export default function RequestDetail() {
     setSubmittingComment(true);
 
     try {
+      // Get user's display name and admin status from Firestore
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      const userName = userDocSnap.exists() 
+        ? userDocSnap.data()?.displayName || user.displayName || 'Anonymous'
+        : user.displayName || 'Anonymous';
+      const isAdmin = userDocSnap.exists() ? userDocSnap.data()?.isAdmin === true : false;
+
       const newComment: Comment = {
         id: Date.now().toString(),
         userId: user.uid,
-        userName: user.displayName || 'Anonymous',
+        userName: userName,
         userAvatar: user.photoURL || undefined,
         text: commentText.trim(),
         createdAt: serverTimestamp() as any,
-        isAdmin: false,
+        isAdmin: isAdmin,
       };
 
       const requestRef = doc(db, 'requests', request.id);

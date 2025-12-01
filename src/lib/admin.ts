@@ -17,7 +17,11 @@ export async function isUserAdmin(user: FirebaseUser | null): Promise<boolean> {
   }
 }
 
-export async function createUserDocument(user: FirebaseUser, isAdmin: boolean = false) {
+export async function createUserDocument(
+  user: FirebaseUser, 
+  customDisplayName?: string,
+  isAdmin: boolean = false
+) {
   try {
     const userRef = doc(db, 'users', user.uid);
     const userDoc = await getDoc(userRef);
@@ -27,7 +31,7 @@ export async function createUserDocument(user: FirebaseUser, isAdmin: boolean = 
       await setDoc(userRef, {
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName || 'Anonymous',
+        displayName: customDisplayName || user.displayName || 'Anonymous',
         photoURL: user.photoURL || null,
         isAdmin: isAdmin,
         createdAt: serverTimestamp(),
@@ -35,6 +39,46 @@ export async function createUserDocument(user: FirebaseUser, isAdmin: boolean = 
     }
   } catch (error) {
     console.error('Error creating user document:', error);
+  }
+}
+
+export async function getUserDisplayName(userId: string): Promise<string> {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      return userDoc.data()?.displayName || 'Anonymous';
+    }
+    return 'Anonymous';
+  } catch (error) {
+    console.error('Error getting user display name:', error);
+    return 'Anonymous';
+  }
+}
+
+export async function ensureUserDocument(user: FirebaseUser): Promise<void> {
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) {
+      const { setDoc, serverTimestamp } = await import('firebase/firestore');
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || 'User',
+        photoURL: user.photoURL || null,
+        isAdmin: false,
+        createdAt: serverTimestamp(),
+      });
+    } else if (!userDoc.data()?.displayName) {
+      // Update if displayName is missing
+      const { updateDoc } = await import('firebase/firestore');
+      await updateDoc(userRef, {
+        displayName: user.displayName || 'User',
+      });
+    }
+  } catch (error) {
+    console.error('Error ensuring user document:', error);
   }
 }
 
