@@ -13,6 +13,7 @@ Mit der Ankündigung von World of Warcraft: Midnight und der Einstellung von Wea
 
 ## ✨ Features
 
+### Für Benutzer
 - **Öffentliche Anfragen**: Alle AddOn-Anfragen sind öffentlich einsehbar
 - **Community-Voting**: Upvote-System für beliebte Anfragen
 - **Status-Tracking**: Verfolge den Entwicklungsfortschritt in Echtzeit
@@ -20,6 +21,13 @@ Mit der Ankündigung von World of Warcraft: Midnight und der Einstellung von Wea
 - **Kategorien & Filter**: Finde schnell relevante AddOn-Anfragen
 - **Benutzer-Profile**: Verwalte deine eigenen Anfragen
 - **Responsive Design**: Funktioniert auf allen Geräten
+
+### Für Admins
+- **Admin-Dashboard**: Übersicht über alle Statistiken und Anfragen
+- **Anfragen verwalten**: Status ändern, Priorität setzen, Links hinzufügen
+- **Status-Workflow**: requested → in-progress → completed/rejected
+- **GitHub & Download-Links**: Füge Links zu fertigen AddOns hinzu
+- **Geschützte Routen**: Nur Admins haben Zugriff auf Admin-Bereiche
 
 ## 🚀 Technologie-Stack
 

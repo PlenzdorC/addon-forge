@@ -2,14 +2,29 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sword, User, LogOut, LogIn } from 'lucide-react';
+import { Sword, User, LogOut, LogIn, Shield } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
+import { useEffect, useState } from 'react';
+import { isUserAdmin } from '@/lib/admin';
 
 export default function Header() {
   const pathname = usePathname();
   const [user, loading] = useAuthState(auth);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (user) {
+        const adminStatus = await isUserAdmin(user);
+        setIsAdmin(adminStatus);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -66,6 +81,17 @@ export default function Header() {
           >
             Über uns
           </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={`text-sm font-medium transition-colors hover:text-amber-400 flex items-center gap-1 ${
+                pathname.startsWith('/admin') ? 'text-amber-400' : 'text-slate-300'
+              }`}
+            >
+              <Shield className="h-4 w-4" />
+              Admin
+            </Link>
+          )}
         </nav>
 
         {/* User Menu */}
