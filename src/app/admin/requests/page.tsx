@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { AddonRequest, RequestStatus } from '@/types';
 import AdminRoute from '@/components/AdminRoute';
 import { formatDate, getCategoryColor, getStatusColor, getStatusLabel, getCategoryLabel } from '@/lib/utils';
-import { Search, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-export default function AdminRequests() {
+function AdminRequestsContent() {
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get('status') as RequestStatus | null;
 
@@ -195,6 +195,20 @@ export default function AdminRequests() {
         </div>
       </div>
     </AdminRoute>
+  );
+}
+
+export default function AdminRequests() {
+  return (
+    <Suspense fallback={
+      <AdminRoute>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+        </div>
+      </AdminRoute>
+    }>
+      <AdminRequestsContent />
+    </Suspense>
   );
 }
 
