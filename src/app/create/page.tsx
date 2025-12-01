@@ -58,7 +58,7 @@ export default function CreateRequest() {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
 
-      const requestData = {
+      const requestData: any = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category,
@@ -68,12 +68,19 @@ export default function CreateRequest() {
         updatedAt: serverTimestamp(),
         userId: user.uid,
         userName: userName,
-        userAvatar: user.photoURL || undefined,
         upvotes: 0,
         upvotedBy: [],
         comments: [],
-        tags: tagsArray.length > 0 ? tagsArray : undefined,
       };
+
+      // Only add optional fields if they have values
+      if (user.photoURL) {
+        requestData.userAvatar = user.photoURL;
+      }
+      
+      if (tagsArray.length > 0) {
+        requestData.tags = tagsArray;
+      }
 
       const docRef = await addDoc(collection(db, 'requests'), requestData);
       router.push(`/request/${docRef.id}`);

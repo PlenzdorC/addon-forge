@@ -4,9 +4,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { 
+  signInWithPopup, 
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail
+} from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { Loader2, LogIn, User } from 'lucide-react';
+import { Loader2, LogIn, User, Mail, Lock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Login() {
@@ -17,6 +23,15 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [tempUser, setTempUser] = useState<any>(null);
+  
+  // Email/Password state
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
 
   useEffect(() => {
     if (user && !showUsernamePrompt) {
@@ -57,6 +72,115 @@ export default function Login() {
       console.error('Error signing in:', err);
       setError(err.message || 'Fehler beim Anmelden. Bitte versuche es erneut.');
       setSigningIn(false);
+    }
+  };
+
+  const handleEmailPasswordAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSigningIn(true);
+
+    // Validation
+    if (!email || !password) {
+      setError('Bitte fülle alle Felder aus.');
+      setSigningIn(false);
+      return;
+    }
+
+    if (isRegisterMode && password !== confirmPassword) {
+      setError('Die Passwörter stimmen nicht überein.');
+      setSigningIn(false);
+      return;
+    }
+
+    if (isRegisterMode && password.length < 6) {
+      setError('Das Passwort muss mindestens 6 Zeichen lang sein.');
+      setSigningIn(false);
+      return;
+    }
+
+    try {
+      let result;
+      
+      if (isRegisterMode) {
+        // Register new user
+        result = await createUserWithEmailAndPassword(auth, email, password);
+        const user = result.user;
+        
+        // Show username prompt for new users
+        setTempUser(user);
+        setUsername('');
+        setShowUsernamePrompt(true);
+        setSigningIn(false);
+      } else {
+        // Sign in existing user
+        result = await signInWithEmailAndPassword(auth, email, password);
+        const user = result.user;
+        
+        // Check if user document exists
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        
+        if (!userDoc.exists()) {
+          // Create user document if it doesn't exist
+          setTempUser(user);
+          setUsername('');
+          setShowUsernamePrompt(true);
+          setSigningIn(false);
+        } else {
+          router.push('/');
+        }
+      }
+    } catch (err: any) {
+      console.error('Error with email/password auth:', err);
+      
+      // User-friendly error messages
+      let errorMessage = 'Fehler beim Anmelden. Bitte versuche es erneut.';
+      
+      if (err.code === 'auth/email-already-in-use') {
+        errorMessage = 'Diese E-Mail-Adresse wird bereits verwendet.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = 'Ungültige E-Mail-Adresse.';
+      } else if (err.code === 'auth/user-not-found') {
+        errorMessage = 'Kein Benutzer mit dieser E-Mail gefunden.';
+      } else if (err.code === 'auth/wrong-password') {
+        errorMessage = 'Falsches Passwort.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMessage = 'Das Passwort ist zu schwach.';
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = 'Zu viele Anmeldeversuche. Bitte versuche es später erneut.';
+      }
+      
+      setError(errorMessage);
+      setSigningIn(false);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setResetSuccess('');
+
+    if (!resetEmail) {
+      setError('Bitte gib deine E-Mail-Adresse ein.');
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      setResetSuccess('Passwort-Reset-Link wurde an deine E-Mail gesendet!');
+      setTimeout(() => {
+        setShowResetPassword(false);
+        setResetEmail('');
+        setResetSuccess('');
+      }, 3000);
+    } catch (err: any) {
+      console.error('Error sending password reset:', err);
+      
+      if (err.code === 'auth/user-not-found') {
+        setError('Kein Benutzer mit dieser E-Mail gefunden.');
+      } else {
+        setError('Fehler beim Senden des Reset-Links. Bitte versuche es erneut.');
+      }
     }
   };
 
@@ -105,6 +229,77 @@ export default function Login() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+      </div>
+    );
+  }
+
+  // Password Reset Modal
+  if (showResetPassword) {
+    return (
+      <div className="max-w-md mx-auto">
+        <div className="wow-card p-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-full mb-4">
+              <Lock className="h-8 w-8 text-slate-900" />
+            </div>
+            <h1 className="text-3xl font-bold text-slate-100 mb-2">Passwort zurücksetzen</h1>
+            <p className="text-slate-400">
+              Gib deine E-Mail-Adresse ein und wir senden dir einen Reset-Link
+            </p>
+          </div>
+
+          <form onSubmit={handlePasswordReset} className="space-y-4">
+            <div>
+              <label htmlFor="resetEmail" className="block text-sm font-medium text-slate-300 mb-2">
+                E-Mail-Adresse
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <input
+                  type="email"
+                  id="resetEmail"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="deine@email.de"
+                  className="wow-input w-full pl-10"
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-red-400 text-sm">{error}</p>
+              </div>
+            )}
+
+            {resetSuccess && (
+              <div className="bg-green-500/10 border border-green-500/50 rounded-lg p-4">
+                <p className="text-green-400 text-sm">{resetSuccess}</p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="submit"
+                className="wow-button flex-1"
+              >
+                Reset-Link senden
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowResetPassword(false);
+                  setResetEmail('');
+                  setError('');
+                }}
+                className="wow-button-secondary"
+              >
+                Abbrechen
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     );
   }
@@ -185,13 +380,105 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-full mb-4">
             <LogIn className="h-8 w-8 text-slate-900" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-100 mb-2">Willkommen zurück</h1>
+          <h1 className="text-3xl font-bold text-slate-100 mb-2">
+            {isRegisterMode ? 'Registrieren' : 'Willkommen zurück'}
+          </h1>
           <p className="text-slate-400">
-            Melde dich an, um AddOn-Anfragen zu erstellen und abzustimmen
+            {isRegisterMode 
+              ? 'Erstelle einen Account, um AddOn-Anfragen zu erstellen'
+              : 'Melde dich an, um AddOn-Anfragen zu erstellen und abzustimmen'
+            }
           </p>
         </div>
 
         <div className="space-y-4">
+          {/* Email/Password Form */}
+          <form onSubmit={handleEmailPasswordAuth} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                E-Mail-Adresse
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="deine@email.de"
+                  className="wow-input w-full pl-10"
+                  disabled={signingIn}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
+                Passwort
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="wow-input w-full pl-10"
+                  disabled={signingIn}
+                />
+              </div>
+            </div>
+
+            {isRegisterMode && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">
+                  Passwort bestätigen
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="wow-input w-full pl-10"
+                    disabled={signingIn}
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={signingIn}
+              className="w-full wow-button disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {signingIn ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin inline mr-2" />
+                  {isRegisterMode ? 'Wird registriert...' : 'Wird angemeldet...'}
+                </>
+              ) : (
+                <>
+                  {isRegisterMode ? 'Registrieren' : 'Anmelden'}
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-700"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-slate-900 text-slate-400">Oder</span>
+            </div>
+          </div>
+
+          {/* Google Sign-In */}
           <button
             onClick={handleGoogleSignIn}
             disabled={signingIn}
@@ -228,8 +515,40 @@ export default function Login() {
           </button>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4">
+            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
               <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Toggle Register/Login */}
+          <div className="text-center">
+            <button
+              onClick={() => {
+                setIsRegisterMode(!isRegisterMode);
+                setError('');
+                setEmail('');
+                setPassword('');
+                setConfirmPassword('');
+              }}
+              className="text-sm text-amber-400 hover:underline"
+            >
+              {isRegisterMode 
+                ? 'Bereits einen Account? Hier anmelden' 
+                : 'Noch keinen Account? Hier registrieren'
+              }
+            </button>
+          </div>
+
+          {/* Password Reset Link */}
+          {!isRegisterMode && (
+            <div className="text-center">
+              <button
+                onClick={() => setShowResetPassword(true)}
+                className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
+              >
+                Passwort vergessen?
+              </button>
             </div>
           )}
         </div>
