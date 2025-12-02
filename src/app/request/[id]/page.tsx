@@ -229,6 +229,35 @@ export default function RequestDetail() {
               </div>
             )}
 
+            {/* Screenshots */}
+            {request.screenshots && request.screenshots.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-slate-200 mb-3">Screenshots</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {request.screenshots.map((screenshot, index) => (
+                    <a
+                      key={index}
+                      href={screenshot}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative overflow-hidden rounded-lg border border-slate-700 hover:border-amber-500 transition-colors"
+                    >
+                      <img
+                        src={screenshot}
+                        alt={`Screenshot ${index + 1}`}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm font-semibold">
+                          Vergrößern
+                        </span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Links */}
             {(request.githubRepo || request.downloadUrl) && (
               <div className="flex gap-4 pt-6 border-t border-slate-700">

@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, storage } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { AddonCategory, Priority } from '@/types';
-import { Loader2, Send, AlertCircle } from 'lucide-react';
+import { Loader2, Send, AlertCircle, Upload, X, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { getCategoryLabel } from '@/lib/utils';
 
@@ -23,6 +24,73 @@ export default function CreateRequest() {
     priority: 'medium' as Priority,
     tags: '',
   });
+
+  const [screenshots, setScreenshots] = useState<File[]>([]);
+  const [screenshotPreviews, setScreenshotPreviews] = useState<string[]>([]);
+  const [uploadingScreenshots, setUploadingScreenshots] = useState(false);
+
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // Limit to 5 screenshots
+    if (screenshots.length + files.length > 5) {
+      setError('Maximal 5 Screenshots erlaubt.');
+      return;
+    }
+
+    // Validate file types and sizes
+    const validFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isUnder5MB = file.size <= 5 * 1024 * 1024; // 5MB
+      
+      if (!isImage) {
+        setError(`${file.name} ist keine Bilddatei.`);
+        return false;
+      }
+      if (!isUnder5MB) {
+        setError(`${file.name} ist größer als 5MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    // Add files
+    setScreenshots([...screenshots, ...validFiles]);
+
+    // Create previews
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshotPreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    setError('');
+  };
+
+  const removeScreenshot = (index: number) => {
+    setScreenshots(screenshots.filter((_, i) => i !== index));
+    setScreenshotPreviews(screenshotPreviews.filter((_, i) => i !== index));
+  };
+
+  const uploadScreenshots = async (requestId: string): Promise<string[]> => {
+    if (screenshots.length === 0) return [];
+
+    const uploadPromises = screenshots.map(async (file, index) => {
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${requestId}_${index}_${Date.now()}.${fileExtension}`;
+      const storageRef = ref(storage, `screenshots/${requestId}/${fileName}`);
+      
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
+    });
+
+    return await Promise.all(uploadPromises);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +112,7 @@ export default function CreateRequest() {
     }
 
     setSubmitting(true);
+    setUploadingScreenshots(screenshots.length > 0);
 
     try {
       // Get user's display name from Firestore
@@ -82,13 +151,32 @@ export default function CreateRequest() {
         requestData.tags = tagsArray;
       }
 
+      // Create request first to get ID
       const docRef = await addDoc(collection(db, 'requests'), requestData);
+
+      // Upload screenshots if any
+      if (screenshots.length > 0) {
+        try {
+          const screenshotURLs = await uploadScreenshots(docRef.id);
+          
+          // Update request with screenshot URLs
+          const { updateDoc } = await import('firebase/firestore');
+          await updateDoc(doc(db, 'requests', docRef.id), {
+            screenshots: screenshotURLs,
+          });
+        } catch (uploadErr) {
+          console.error('Error uploading screenshots:', uploadErr);
+          // Continue anyway - request is created, just without screenshots
+        }
+      }
+
       // Redirect to success page with A/B testing
       router.push(`/request-success?id=${docRef.id}`);
     } catch (err) {
       console.error('Error creating request:', err);
       setError('Fehler beim Erstellen der Anfrage. Bitte versuche es erneut.');
       setSubmitting(false);
+      setUploadingScreenshots(false);
     }
   };
 
@@ -220,6 +308,72 @@ export default function CreateRequest() {
           <p className="text-xs text-slate-500 mt-1">
             Füge Tags hinzu, um deine Anfrage besser auffindbar zu machen
           </p>
+        </div>
+
+        {/* Screenshots */}
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">
+            Screenshots (optional)
+          </label>
+          <div className="space-y-4">
+            {/* Upload Button */}
+            {screenshots.length < 5 && (
+              <div>
+                <label
+                  htmlFor="screenshot-upload"
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg cursor-pointer transition-colors border-2 border-dashed border-slate-600 hover:border-amber-500"
+                >
+                  <Upload className="h-5 w-5" />
+                  <span>Screenshots hochladen</span>
+                </label>
+                <input
+                  type="file"
+                  id="screenshot-upload"
+                  accept="image/*"
+                  multiple
+                  onChange={handleScreenshotChange}
+                  className="hidden"
+                  disabled={submitting}
+                />
+                <p className="text-xs text-slate-500 mt-2">
+                  Maximal 5 Screenshots, je max. 5MB (PNG, JPG, WebP)
+                </p>
+              </div>
+            )}
+
+            {/* Screenshot Previews */}
+            {screenshotPreviews.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {screenshotPreviews.map((preview, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={preview}
+                      alt={`Screenshot ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg border border-slate-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeScreenshot(index)}
+                      className="absolute top-2 right-2 p-1 bg-red-500 hover:bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      disabled={submitting}
+                    >
+                      <X className="h-4 w-4 text-white" />
+                    </button>
+                    <div className="absolute bottom-2 left-2 px-2 py-1 bg-slate-900/80 rounded text-xs text-slate-300">
+                      {screenshots[index].name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {uploadingScreenshots && (
+              <div className="flex items-center gap-2 text-amber-400 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Screenshots werden hochgeladen...</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Error Message */}

@@ -111,10 +111,22 @@ export default function Footer() {
             <p className="text-sm text-slate-400">
               © {currentYear} AddOnForge. Alle Rechte vorbehalten.
             </p>
-            <p className="text-sm text-slate-400 flex items-center">
-              Gemacht mit <Heart className="h-4 w-4 mx-1 text-red-500" /> für
-              die WoW Community
-            </p>
+            
+            <div className="flex items-center gap-4">
+              <a
+                href="https://buymeacoffee.com/nxmsz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-slate-900 font-semibold rounded-lg transition-all text-sm"
+              >
+                ☕ Buy Me a Coffee
+              </a>
+              
+              <p className="text-sm text-slate-400 flex items-center">
+                Gemacht mit <Heart className="h-4 w-4 mx-1 text-red-500" /> für
+                die WoW Community
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -74,6 +74,17 @@ export default function RequestCard({ request }: RequestCardProps) {
             <span className="text-sm font-semibold text-slate-300">{upvotes}</span>
           </div>
 
+          {/* Screenshot Thumbnail */}
+          {request.screenshots && request.screenshots.length > 0 && (
+            <div className="flex-shrink-0">
+              <img
+                src={request.screenshots[0]}
+                alt={request.title}
+                className="w-32 h-24 object-cover rounded-lg border border-slate-700 group-hover:border-amber-500/50 transition-colors"
+              />
+            </div>
+          )}
+
           {/* Content */}
           <div className="flex-1 min-w-0">
             {/* Header */}
