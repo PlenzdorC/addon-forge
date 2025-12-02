@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref, deleteObject } from 'firebase/storage';
 import { AddonRequest, RequestStatus, Priority } from '@/types';
 import AdminRoute from '@/components/AdminRoute';
 import StatusSelector from '@/components/admin/StatusSelector';
@@ -21,6 +22,8 @@ import {
   Github,
   Download,
   ExternalLink,
+  Image as ImageIcon,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -42,6 +45,8 @@ export default function EditRequest() {
     githubRepo: '',
     downloadUrl: '',
   });
+
+  const [deletingScreenshot, setDeletingScreenshot] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchRequest = async () => {
@@ -97,6 +102,52 @@ export default function EditRequest() {
     }
   };
 
+  const handleDeleteScreenshot = async (screenshotUrl: string, index: number) => {
+    if (!confirm('Möchtest du diesen Screenshot wirklich löschen?')) {
+      return;
+    }
+
+    setDeletingScreenshot(index);
+    setError('');
+
+    try {
+      // Extract file path from URL
+      const url = new URL(screenshotUrl);
+      const pathMatch = url.pathname.match(/\/o\/(.+)\?/);
+      
+      if (pathMatch) {
+        const filePath = decodeURIComponent(pathMatch[1]);
+        const fileRef = ref(storage, filePath);
+        
+        // Delete from Storage
+        await deleteObject(fileRef);
+      }
+
+      // Update Firestore - remove screenshot URL
+      const updatedScreenshots = request!.screenshots!.filter((_, i) => i !== index);
+      const requestRef = doc(db, 'requests', requestId);
+      
+      await updateDoc(requestRef, {
+        screenshots: updatedScreenshots.length > 0 ? updatedScreenshots : null,
+        updatedAt: serverTimestamp(),
+      });
+
+      // Update local state
+      setRequest({
+        ...request!,
+        screenshots: updatedScreenshots.length > 0 ? updatedScreenshots : undefined,
+      });
+
+      setSuccess('Screenshot erfolgreich gelöscht!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Error deleting screenshot:', err);
+      setError('Fehler beim Löschen des Screenshots');
+    } finally {
+      setDeletingScreenshot(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm('Möchtest du diese Anfrage wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
       return;
@@ -106,6 +157,28 @@ export default function EditRequest() {
     setError('');
 
     try {
+      // Delete all screenshots from Storage first
+      if (request?.screenshots && request.screenshots.length > 0) {
+        const deletePromises = request.screenshots.map(async (screenshotUrl) => {
+          try {
+            const url = new URL(screenshotUrl);
+            const pathMatch = url.pathname.match(/\/o\/(.+)\?/);
+            
+            if (pathMatch) {
+              const filePath = decodeURIComponent(pathMatch[1]);
+              const fileRef = ref(storage, filePath);
+              await deleteObject(fileRef);
+            }
+          } catch (err) {
+            console.error('Error deleting screenshot:', err);
+            // Continue anyway
+          }
+        });
+
+        await Promise.all(deletePromises);
+      }
+
+      // Delete Firestore document
       await deleteDoc(doc(db, 'requests', requestId));
       router.push('/admin/requests');
     } catch (err) {
@@ -289,6 +362,51 @@ export default function EditRequest() {
               Link zum fertigen AddOn (z.B. CurseForge, GitHub Release)
             </p>
           </div>
+
+          {/* Screenshots Management */}
+          {request.screenshots && request.screenshots.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-300 mb-3">
+                <ImageIcon className="inline h-4 w-4 mr-1" />
+                Screenshots ({request.screenshots.length})
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {request.screenshots.map((screenshot, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={screenshot}
+                      alt={`Screenshot ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg border border-slate-700"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteScreenshot(screenshot, index)}
+                      disabled={deletingScreenshot === index}
+                      className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                      title="Screenshot löschen"
+                    >
+                      {deletingScreenshot === index ? (
+                        <Loader2 className="h-4 w-4 text-white animate-spin" />
+                      ) : (
+                        <X className="h-4 w-4 text-white" />
+                      )}
+                    </button>
+                    <a
+                      href={screenshot}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute bottom-2 left-2 px-2 py-1 bg-slate-900/80 rounded text-xs text-slate-300 hover:bg-slate-800 transition-colors"
+                    >
+                      Vergrößern
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-500 mt-2">
+                Klicke auf das X um einen Screenshot zu löschen
+              </p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-4">
