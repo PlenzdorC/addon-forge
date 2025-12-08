@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { AddonRequest, Comment } from '@/types';
@@ -110,13 +110,14 @@ export default function RequestDetail() {
         : user.displayName || 'Anonymous';
       const isAdmin = userDocSnap.exists() ? userDocSnap.data()?.isAdmin === true : false;
 
+      const now = Timestamp.now();
       const newComment: Comment = {
         id: Date.now().toString(),
         userId: user.uid,
         userName: userName,
         userAvatar: user.photoURL || undefined,
         text: commentText.trim(),
-        createdAt: serverTimestamp() as any,
+        createdAt: now,
         isAdmin: isAdmin,
       };
 
