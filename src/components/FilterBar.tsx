@@ -26,7 +26,7 @@ export default function FilterBar({
   setSortBy,
 }: FilterBarProps) {
   const categories: (AddonCategory | 'all')[] = ['all', 'UI', 'Combat', 'Utility', 'Social', 'Profession', 'Other'];
-  const statuses: (RequestStatus | 'all')[] = ['all', 'requested', 'in-progress', 'completed', 'rejected'];
+  const statuses: (RequestStatus | 'all')[] = ['all', 'requested', 'in-progress', 'completed', 'rejected', 'analyzing'];
 
   return (
     <div className="wow-card p-6 mb-6 space-y-4">

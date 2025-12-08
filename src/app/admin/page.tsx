@@ -41,6 +41,7 @@ export default function AdminDashboard() {
     inProgress: requests.filter((r) => r.status === 'in-progress').length,
     completed: requests.filter((r) => r.status === 'completed').length,
     rejected: requests.filter((r) => r.status === 'rejected').length,
+    analyzing: requests.filter((r) => r.status === 'analyzing').length,
     totalUpvotes: requests.reduce((sum, r) => sum + r.upvotes, 0),
     totalComments: requests.reduce((sum, r) => sum + (r.comments?.length || 0), 0),
   };
@@ -123,6 +124,10 @@ export default function AdminDashboard() {
                 <span className="text-slate-400">Abgelehnt</span>
                 <span className="text-red-400 font-semibold">{stats.rejected}</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400">Wird analysiert</span>
+                <span className="text-sky-400 font-semibold">{stats.analyzing}</span>
+              </div>
             </div>
           </div>
 
@@ -146,6 +151,12 @@ export default function AdminDashboard() {
                 className="wow-button-secondary text-center"
               >
                 In Bearbeitung
+              </Link>
+              <Link
+                href="/admin/requests?status=analyzing"
+                className="wow-button-secondary text-center"
+              >
+                Wird analysiert
               </Link>
               <Link
                 href="/"

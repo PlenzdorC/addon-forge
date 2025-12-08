@@ -14,7 +14,7 @@ export default function StatusSelector({
   onChange,
   disabled = false,
 }: StatusSelectorProps) {
-  const statuses: RequestStatus[] = ['requested', 'in-progress', 'completed', 'rejected'];
+  const statuses: RequestStatus[] = ['requested', 'in-progress', 'completed', 'rejected', 'analyzing'];
 
   return (
     <div className="flex flex-wrap gap-2">

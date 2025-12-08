@@ -42,6 +42,7 @@ export function getStatusColor(status: string): string {
     'in-progress': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
     'completed': 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
     'rejected': 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+    'analyzing': 'bg-sky-500/20 text-sky-300 border-sky-500/30',
   };
   return colors[status] || colors['requested'];
 }
@@ -52,6 +53,7 @@ export function getStatusLabel(status: string): string {
     'in-progress': 'In Bearbeitung',
     'completed': 'Fertiggestellt',
     'rejected': 'Abgelehnt',
+    'analyzing': 'In Analyse',
   };
   return labels[status] || status;
 }

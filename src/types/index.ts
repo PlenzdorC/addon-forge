@@ -2,7 +2,7 @@ import { Timestamp } from 'firebase/firestore';
 
 export type AddonCategory = 'UI' | 'Combat' | 'Utility' | 'Social' | 'Profession' | 'Other';
 
-export type RequestStatus = 'requested' | 'in-progress' | 'completed' | 'rejected';
+export type RequestStatus = 'requested' | 'in-progress' | 'completed' | 'rejected' | 'analyzing';
 
 export type Priority = 'low' | 'medium' | 'high';
 
