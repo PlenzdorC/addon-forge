@@ -93,7 +93,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://buymeacoffee.com/nxmsz"
+                  href="https://buymeacoffee.com/nmxsz"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-1"
@@ -114,7 +114,7 @@ export default function Footer() {
             
             <div className="flex items-center gap-4">
               <a
-                href="https://buymeacoffee.com/nxmsz"
+                href="https://buymeacoffee.com/nmxsz"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-slate-900 font-semibold rounded-lg transition-all text-sm"

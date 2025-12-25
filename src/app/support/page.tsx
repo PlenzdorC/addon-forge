@@ -85,7 +85,7 @@ export default function Support() {
         </p>
         
         <a
-          href="https://buymeacoffee.com/nxmsz"
+          href="https://buymeacoffee.com/nmxsz"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-3 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-slate-900 font-bold px-8 py-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl text-lg"
