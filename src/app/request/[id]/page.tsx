@@ -115,7 +115,7 @@ export default function RequestDetail() {
         id: Date.now().toString(),
         userId: user.uid,
         userName: userName,
-        userAvatar: user.photoURL || undefined,
+        ...(user.photoURL && { userAvatar: user.photoURL }),
         text: commentText.trim(),
         createdAt: now,
         isAdmin: isAdmin,

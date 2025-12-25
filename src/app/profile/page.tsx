@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { AddonRequest } from '@/types';
 import RequestCard from '@/components/RequestCard';
 import { Loader2, User, Mail, Calendar } from 'lucide-react';
@@ -14,12 +14,33 @@ export default function Profile() {
   const [user, loading] = useAuthState(auth);
   const [userRequests, setUserRequests] = useState<AddonRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
+  const [displayName, setDisplayName] = useState<string>('');
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    const fetchDisplayName = async () => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setDisplayName(userDoc.data()?.displayName || user.displayName || 'Anonymous');
+          } else {
+            setDisplayName(user.displayName || 'Anonymous');
+          }
+        } catch (error) {
+          console.error('Error fetching display name:', error);
+          setDisplayName(user.displayName || 'Anonymous');
+        }
+      }
+    };
+
+    fetchDisplayName();
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -58,7 +79,7 @@ export default function Profile() {
           {user.photoURL ? (
             <img
               src={user.photoURL}
-              alt={user.displayName || 'User'}
+              alt={displayName || 'User'}
               className="h-24 w-24 rounded-full border-4 border-amber-500"
             />
           ) : (
@@ -68,7 +89,7 @@ export default function Profile() {
           )}
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-slate-100 mb-2">
-              {user.displayName || 'Anonymous'}
+              {displayName || 'Anonymous'}
             </h1>
             <div className="space-y-1">
               {user.email && (
