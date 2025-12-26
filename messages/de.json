@@ -125,7 +125,10 @@
     "backToHome": "Zurück zur Startseite",
     "deleteConfirm": "Bist du sicher, dass du diese Anfrage löschen möchtest?",
     "delete": "Löschen",
-    "edit": "Bearbeiten"
+    "edit": "Bearbeiten",
+    "reply": "Antworten",
+    "replyTo": "Antwort auf {name}",
+    "cancelReply": "Abbrechen"
   },
   "footer": {
     "about": "AddOnForge",

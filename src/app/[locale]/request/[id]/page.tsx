@@ -27,6 +27,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Edit,
+  Reply,
+  CornerDownRight,
 } from 'lucide-react';
 import {Link} from '@/i18n/routing';
 import {useTranslations} from 'next-intl';
@@ -43,6 +45,7 @@ export default function RequestDetail() {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [upvoting, setUpvoting] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; userName: string } | null>(null);
 
   const requestId = params.id as string;
 
@@ -127,6 +130,10 @@ export default function RequestDetail() {
         text: commentText.trim(),
         createdAt: now,
         isAdmin: isAdmin,
+        ...(replyingTo && { 
+          replyTo: replyingTo.id,
+          replyToUserName: replyingTo.userName
+        }),
       };
 
       const requestRef = doc(db, 'requests', request.id);
@@ -140,6 +147,7 @@ export default function RequestDetail() {
         comments: [...(request.comments || []), newComment],
       });
       setCommentText('');
+      setReplyingTo(null);
     } catch (error) {
       console.error('Error submitting comment:', error);
     } finally {
@@ -427,32 +435,61 @@ export default function RequestDetail() {
         {/* Comment Form */}
         {user ? (
           <form onSubmit={handleSubmitComment} className="mb-8">
+            {replyingTo && (
+              <div className="flex items-center gap-2 mb-3 text-sm text-slate-400 bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+                <CornerDownRight className="h-4 w-4 text-amber-500" />
+                <span>
+                  {t('replyTo', { name: replyingTo.userName })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setReplyingTo(null)}
+                  className="ml-auto text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             <textarea
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder={t('addComment')}
+              placeholder={replyingTo ? t('replyTo', { name: replyingTo.userName }) : t('addComment')}
               className="wow-input w-full min-h-[100px] resize-y mb-4"
               maxLength={1000}
             />
             <div className="flex justify-between items-center">
               <p className="text-xs text-slate-500">{commentText.length}/1000 {locale === 'de' ? 'Zeichen' : 'characters'}</p>
-              <button
-                type="submit"
-                disabled={!commentText.trim() || submittingComment}
-                className="wow-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submittingComment ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {t('posting')}
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    {t('postComment')}
-                  </>
+              <div className="flex gap-2">
+                {replyingTo && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplyingTo(null);
+                      setCommentText('');
+                    }}
+                    className="wow-button-secondary flex items-center gap-2"
+                  >
+                    {t('cancelReply')}
+                  </button>
                 )}
-              </button>
+                <button
+                  type="submit"
+                  disabled={!commentText.trim() || submittingComment}
+                  className="wow-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submittingComment ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {t('posting')}
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      {t('postComment')}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         ) : (
@@ -469,35 +506,111 @@ export default function RequestDetail() {
         {/* Comments List */}
         <div className="space-y-6">
           {request.comments && request.comments.length > 0 ? (
-            request.comments.map((comment) => (
-              <div key={comment.id} className="flex gap-4">
-                <div className="flex-shrink-0">
-                  {comment.userAvatar ? (
-                    <img
-                      src={comment.userAvatar}
-                      alt={comment.userName}
-                      className="h-10 w-10 rounded-full"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
-                      <User className="h-5 w-5 text-slate-900" />
+            (() => {
+              // Separate comments into top-level and replies
+              const topLevelComments = request.comments.filter(c => !c.replyTo);
+              const replies = request.comments.filter(c => c.replyTo);
+              
+              return topLevelComments.map((comment) => {
+                // Find all replies to this comment
+                const commentReplies = replies.filter(r => r.replyTo === comment.id);
+                
+                return (
+                  <div key={comment.id} className="space-y-4">
+                    {/* Main Comment */}
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0">
+                        {comment.userAvatar ? (
+                          <img
+                            src={comment.userAvatar}
+                            alt={comment.userName}
+                            className="h-10 w-10 rounded-full"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
+                            <User className="h-5 w-5 text-slate-900" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-slate-200">{comment.userName}</span>
+                          {comment.isAdmin && (
+                            <span className="px-2 py-0.5 text-xs bg-amber-500 text-slate-900 rounded-full font-semibold">
+                              Admin
+                            </span>
+                          )}
+                          <span className="text-sm text-slate-500">{formatDate(comment.createdAt)}</span>
+                        </div>
+                        <p className="text-slate-300 whitespace-pre-wrap">{comment.text}</p>
+                        {user && (
+                          <button
+                            onClick={() => {
+                              setReplyingTo({ id: comment.id, userName: comment.userName });
+                              // Scroll to comment form
+                              document.querySelector('form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }}
+                            className="mt-2 text-sm text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1"
+                          >
+                            <Reply className="h-3 w-3" />
+                            {t('reply')}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-slate-200">{comment.userName}</span>
-                    {comment.isAdmin && (
-                      <span className="px-2 py-0.5 text-xs bg-amber-500 text-slate-900 rounded-full font-semibold">
-                        Admin
-                      </span>
+                    
+                    {/* Replies to this comment */}
+                    {commentReplies.length > 0 && (
+                      <div className="ml-14 space-y-4 border-l-2 border-slate-700 pl-4">
+                        {commentReplies.map((reply) => (
+                          <div key={reply.id} className="flex gap-4">
+                            <div className="flex-shrink-0">
+                              {reply.userAvatar ? (
+                                <img
+                                  src={reply.userAvatar}
+                                  alt={reply.userName}
+                                  className="h-8 w-8 rounded-full"
+                                />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
+                                  <User className="h-4 w-4 text-slate-900" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-semibold text-slate-200">{reply.userName}</span>
+                                {reply.isAdmin && (
+                                  <span className="px-2 py-0.5 text-xs bg-amber-500 text-slate-900 rounded-full font-semibold">
+                                    Admin
+                                  </span>
+                                )}
+                                <CornerDownRight className="h-3 w-3 text-slate-600" />
+                                <span className="text-xs text-slate-500">{reply.replyToUserName}</span>
+                                <span className="text-sm text-slate-500">{formatDate(reply.createdAt)}</span>
+                              </div>
+                              <p className="text-slate-300 whitespace-pre-wrap">{reply.text}</p>
+                              {user && (
+                                <button
+                                  onClick={() => {
+                                    setReplyingTo({ id: reply.id, userName: reply.userName });
+                                    document.querySelector('form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                  }}
+                                  className="mt-2 text-sm text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1"
+                                >
+                                  <Reply className="h-3 w-3" />
+                                  {t('reply')}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
-                    <span className="text-sm text-slate-500">{formatDate(comment.createdAt)}</span>
                   </div>
-                  <p className="text-slate-300 whitespace-pre-wrap">{comment.text}</p>
-                </div>
-              </div>
-            ))
+                );
+              });
+            })()
           ) : (
             <p className="text-slate-500 text-center py-8">
               {t('noComments')}

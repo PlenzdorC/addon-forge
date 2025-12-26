@@ -14,6 +14,8 @@ export interface Comment {
   text: string;
   createdAt: Timestamp;
   isAdmin: boolean;
+  replyTo?: string; // ID of the comment this is replying to
+  replyToUserName?: string; // Name of the user being replied to
 }
 
 export interface AddonRequest {
