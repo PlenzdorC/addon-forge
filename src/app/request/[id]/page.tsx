@@ -23,6 +23,9 @@ import {
   Loader2,
   Send,
   ArrowLeft,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -35,6 +38,7 @@ export default function RequestDetail() {
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [upvoting, setUpvoting] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const requestId = params.id as string;
 
@@ -139,6 +143,47 @@ export default function RequestDetail() {
     }
   };
 
+  // Lightbox handlers
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+  };
+
+  const closeLightbox = () => {
+    setLightboxIndex(null);
+  };
+
+  const nextImage = () => {
+    if (lightboxIndex !== null && request?.screenshots) {
+      setLightboxIndex((lightboxIndex + 1) % request.screenshots.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (lightboxIndex !== null && request?.screenshots) {
+      setLightboxIndex(
+        (lightboxIndex - 1 + request.screenshots.length) % request.screenshots.length
+      );
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (lightboxIndex === null) return;
+
+      if (e.key === 'Escape') {
+        closeLightbox();
+      } else if (e.key === 'ArrowRight') {
+        nextImage();
+      } else if (e.key === 'ArrowLeft') {
+        prevImage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxIndex, request?.screenshots]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -154,7 +199,78 @@ export default function RequestDetail() {
   const hasUpvoted = user ? request.upvotedBy?.includes(user.uid) : false;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <>
+      {/* Lightbox */}
+      {lightboxIndex !== null && request?.screenshots && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          onClick={closeLightbox}
+        >
+          {/* Close button */}
+          <button
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-lg transition-colors z-10"
+            aria-label="Schließen"
+          >
+            <X className="h-6 w-6 text-white" />
+          </button>
+
+          {/* Image counter */}
+          <div className="absolute top-4 left-4 px-4 py-2 bg-slate-800/80 rounded-lg text-white font-semibold z-10">
+            {lightboxIndex + 1} / {request.screenshots.length}
+          </div>
+
+          {/* Previous button */}
+          {request.screenshots.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                prevImage();
+              }}
+              className="absolute left-4 p-3 bg-slate-800/80 hover:bg-slate-700 rounded-lg transition-colors z-10"
+              aria-label="Vorheriges Bild"
+            >
+              <ChevronLeft className="h-8 w-8 text-white" />
+            </button>
+          )}
+
+          {/* Image */}
+          <div
+            className="max-w-7xl max-h-[90vh] mx-auto px-20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={request.screenshots[lightboxIndex]}
+              alt={`Screenshot ${lightboxIndex + 1}`}
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            />
+          </div>
+
+          {/* Next button */}
+          {request.screenshots.length > 1 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                nextImage();
+              }}
+              className="absolute right-4 p-3 bg-slate-800/80 hover:bg-slate-700 rounded-lg transition-colors z-10"
+              aria-label="Nächstes Bild"
+            >
+              <ChevronRight className="h-8 w-8 text-white" />
+            </button>
+          )}
+
+          {/* Keyboard hint */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-slate-800/80 rounded-lg text-slate-300 text-sm">
+            <span className="hidden md:inline">
+              Nutze ← → für Navigation | ESC zum Schließen
+            </span>
+            <span className="md:hidden">Tippe zum Schließen</span>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-4xl mx-auto">
       {/* Back Button */}
       <Link
         href="/"
@@ -236,12 +352,10 @@ export default function RequestDetail() {
                 <h3 className="text-lg font-semibold text-slate-200 mb-3">Screenshots</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {request.screenshots.map((screenshot, index) => (
-                    <a
+                    <button
                       key={index}
-                      href={screenshot}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group relative overflow-hidden rounded-lg border border-slate-700 hover:border-amber-500 transition-colors"
+                      onClick={() => openLightbox(index)}
+                      className="group relative overflow-hidden rounded-lg border border-slate-700 hover:border-amber-500 transition-colors cursor-pointer"
                     >
                       <img
                         src={screenshot}
@@ -253,7 +367,7 @@ export default function RequestDetail() {
                           Vergrößern
                         </span>
                       </div>
-                    </a>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -379,6 +493,7 @@ export default function RequestDetail() {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
