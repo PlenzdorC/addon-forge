@@ -1,7 +1,11 @@
+'use client';
+
 import { Github, Heart } from 'lucide-react';
-import Link from 'next/link';
+import {Link} from '@/i18n/routing';
+import {useTranslations} from 'next-intl';
 
 export default function Footer() {
+  const t = useTranslations('footer');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -11,18 +15,17 @@ export default function Footer() {
           {/* About */}
           <div>
             <h3 className="text-lg font-semibold text-amber-400 mb-3">
-              AddOnForge
+              {t('about')}
             </h3>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Eine Community-Plattform für World of Warcraft AddOn-Anfragen.
-              Inspiriert von WeakAuras, entwickelt für die Community.
+              {t('aboutText')}
             </p>
           </div>
 
           {/* Links */}
           <div>
             <h3 className="text-lg font-semibold text-amber-400 mb-3">
-              Links
+              {t('links')}
             </h3>
             <ul className="space-y-2">
               <li>
@@ -30,7 +33,7 @@ export default function Footer() {
                   href="/"
                   className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
                 >
-                  Alle Anfragen
+                  {t('allRequests')}
                 </Link>
               </li>
               <li>
@@ -38,7 +41,7 @@ export default function Footer() {
                   href="/create"
                   className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
                 >
-                  Neue Anfrage erstellen
+                  {t('createRequest')}
                 </Link>
               </li>
               <li>
@@ -46,7 +49,7 @@ export default function Footer() {
                   href="/about"
                   className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
                 >
-                  Über das Projekt
+                  {t('aboutProject')}
                 </Link>
               </li>
             </ul>
@@ -55,7 +58,7 @@ export default function Footer() {
           {/* Legal */}
           <div>
             <h3 className="text-lg font-semibold text-amber-400 mb-3">
-              Rechtliches
+              {t('legal')}
             </h3>
             <ul className="space-y-2">
               <li>
@@ -63,7 +66,7 @@ export default function Footer() {
                   href="/imprint"
                   className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
                 >
-                  Impressum
+                  {t('imprint')}
                 </Link>
               </li>
               <li>
@@ -71,7 +74,7 @@ export default function Footer() {
                   href="/privacy"
                   className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
                 >
-                  Datenschutz
+                  {t('privacy')}
                 </Link>
               </li>
             </ul>
@@ -80,7 +83,7 @@ export default function Footer() {
           {/* Support */}
           <div>
             <h3 className="text-lg font-semibold text-amber-400 mb-3">
-              Unterstützung
+              {t('support')}
             </h3>
             <ul className="space-y-2">
               <li>
@@ -88,7 +91,7 @@ export default function Footer() {
                   href="/support"
                   className="text-sm text-slate-400 hover:text-amber-400 transition-colors"
                 >
-                  Unterstütze uns
+                  {t('supportUs')}
                 </Link>
               </li>
               <li>
@@ -98,7 +101,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-sm text-slate-400 hover:text-amber-400 transition-colors inline-flex items-center gap-1"
                 >
-                  Buy Me a Coffee ☕
+                  {t('buyMeACoffee')} ☕
                 </a>
               </li>
             </ul>
@@ -109,7 +112,7 @@ export default function Footer() {
         <div className="mt-8 pt-6 border-t border-slate-700/50">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm text-slate-400">
-              © {currentYear} AddOnForge. Alle Rechte vorbehalten.
+              {t('copyright', {year: currentYear})}
             </p>
             
             <div className="flex items-center gap-4">
@@ -119,12 +122,13 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-slate-900 font-semibold rounded-lg transition-all text-sm"
               >
-                ☕ Buy Me a Coffee
+                ☕ {t('buyMeACoffee')}
               </a>
               
               <p className="text-sm text-slate-400 flex items-center">
-                Gemacht mit <Heart className="h-4 w-4 mx-1 text-red-500" /> für
-                die WoW Community
+                {t.rich('madeWith', {
+                  heart: () => <Heart className="h-4 w-4 mx-1 text-red-500" />
+                })}
               </p>
             </div>
           </div>

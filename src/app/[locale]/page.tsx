@@ -7,9 +7,11 @@ import { AddonRequest, AddonCategory, RequestStatus } from '@/types';
 import RequestCard from '@/components/RequestCard';
 import FilterBar from '@/components/FilterBar';
 import { Loader2, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import {Link} from '@/i18n/routing';
+import {useTranslations} from 'next-intl';
 
 export default function Home() {
+  const t = useTranslations('home');
   const [requests, setRequests] = useState<AddonRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,18 +67,17 @@ export default function Home() {
         <div className="flex items-center justify-center mb-4">
           <Sparkles className="h-8 w-8 text-amber-400 mr-2" />
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
-            AddOnForge
+            {t('title')}
           </h1>
         </div>
         <p className="text-xl text-slate-300 mb-6">
-          Community-Plattform für World of Warcraft AddOn-Anfragen
+          {t('subtitle')}
         </p>
         <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
-          Inspiriert von WeakAuras. Teile deine Ideen für AddOns, stimme für die besten Vorschläge
-          und verfolge den Entwicklungsfortschritt.
+          {t('description')}
         </p>
         <Link href="/create" className="wow-button inline-block">
-          Neue Anfrage erstellen
+          {t('createButton')}
         </Link>
       </div>
 
@@ -95,7 +96,7 @@ export default function Home() {
       {/* Results Count */}
       <div className="mb-4">
         <p className="text-slate-400">
-          {filteredRequests.length} {filteredRequests.length === 1 ? 'Anfrage' : 'Anfragen'} gefunden
+          {t('requestsFound', {count: filteredRequests.length})}
         </p>
       </div>
 
@@ -108,11 +109,11 @@ export default function Home() {
         <div className="wow-card p-12 text-center">
           <p className="text-slate-400 text-lg mb-4">
             {searchQuery || selectedCategory !== 'all' || selectedStatus !== 'all'
-              ? 'Keine Anfragen gefunden. Versuche andere Filter.'
-              : 'Noch keine Anfragen vorhanden.'}
+              ? t('noRequestsFiltered')
+              : t('noRequests')}
           </p>
           <Link href="/create" className="wow-button inline-block">
-            Erste Anfrage erstellen
+            {t('createFirst')}
           </Link>
         </div>
       ) : (

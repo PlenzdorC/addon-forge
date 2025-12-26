@@ -5,19 +5,28 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(timestamp: any): string {
+export function formatDate(timestamp: any, locale: string = 'de'): string {
   if (!timestamp) return '';
   
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
   
-  if (diffInSeconds < 60) return 'gerade eben';
-  if (diffInSeconds < 3600) return `vor ${Math.floor(diffInSeconds / 60)} Minuten`;
-  if (diffInSeconds < 86400) return `vor ${Math.floor(diffInSeconds / 3600)} Stunden`;
-  if (diffInSeconds < 604800) return `vor ${Math.floor(diffInSeconds / 86400)} Tagen`;
+  if (diffInSeconds < 60) return locale === 'de' ? 'gerade eben' : 'just now';
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return locale === 'de' ? `vor ${minutes} Minuten` : `${minutes} minutes ago`;
+  }
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return locale === 'de' ? `vor ${hours} Stunden` : `${hours} hours ago`;
+  }
+  if (diffInSeconds < 604800) {
+    const days = Math.floor(diffInSeconds / 86400);
+    return locale === 'de' ? `vor ${days} Tagen` : `${days} days ago`;
+  }
   
-  return date.toLocaleDateString('de-DE', {
+  return date.toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -47,19 +56,29 @@ export function getStatusColor(status: string): string {
   return colors[status] || colors['requested'];
 }
 
-export function getStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
+// These functions are kept for backwards compatibility
+// New code should use useTranslations('status') and useTranslations('categories')
+export function getStatusLabel(status: string, locale: string = 'de'): string {
+  const labelsDE: Record<string, string> = {
     'requested': 'Angefragt',
     'in-progress': 'In Bearbeitung',
     'completed': 'Fertiggestellt',
     'rejected': 'Abgelehnt',
     'analyzing': 'In Analyse',
   };
+  const labelsEN: Record<string, string> = {
+    'requested': 'Requested',
+    'in-progress': 'In Progress',
+    'completed': 'Completed',
+    'rejected': 'Rejected',
+    'analyzing': 'Analyzing',
+  };
+  const labels = locale === 'de' ? labelsDE : labelsEN;
   return labels[status] || status;
 }
 
-export function getCategoryLabel(category: string): string {
-  const labels: Record<string, string> = {
+export function getCategoryLabel(category: string, locale: string = 'de'): string {
+  const labelsDE: Record<string, string> = {
     'UI': 'Benutzeroberfläche',
     'Combat': 'Kampf',
     'Utility': 'Nützliches',
@@ -67,6 +86,15 @@ export function getCategoryLabel(category: string): string {
     'Profession': 'Berufe',
     'Other': 'Sonstiges',
   };
+  const labelsEN: Record<string, string> = {
+    'UI': 'User Interface',
+    'Combat': 'Combat',
+    'Utility': 'Utility',
+    'Social': 'Social',
+    'Profession': 'Professions',
+    'Other': 'Other',
+  };
+  const labels = locale === 'de' ? labelsDE : labelsEN;
   return labels[category] || category;
 }
 

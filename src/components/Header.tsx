@@ -1,15 +1,18 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Sword, User, LogOut, LogIn, Shield } from 'lucide-react';
+import { Sword, User, LogOut, LogIn, Shield, Globe } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 import { isUserAdmin } from '@/lib/admin';
+import {useTranslations, useLocale} from 'next-intl';
+import {Link, usePathname, useRouter} from '@/i18n/routing';
 
 export default function Header() {
+  const t = useTranslations('nav');
+  const locale = useLocale();
+  const router = useRouter();
   const pathname = usePathname();
   const [user, loading] = useAuthState(auth);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -50,6 +53,10 @@ export default function Header() {
     }
   };
 
+  const switchLanguage = (newLocale: string) => {
+    router.replace(pathname, {locale: newLocale});
+  };
+
   const isActive = (path: string) => pathname === path;
 
   return (
@@ -63,10 +70,10 @@ export default function Header() {
           </div>
           <div className="flex flex-col">
             <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
-              AddOnForge
+              {t('logo')}
             </span>
             <span className="text-xs text-slate-400 -mt-1">
-              WoW AddOn Requests
+              {t('subtitle')}
             </span>
           </div>
         </Link>
@@ -79,7 +86,7 @@ export default function Header() {
               isActive('/') ? 'text-amber-400' : 'text-slate-300'
             }`}
           >
-            Anfragen
+            {t('requests')}
           </Link>
           <Link
             href="/create"
@@ -87,7 +94,7 @@ export default function Header() {
               isActive('/create') ? 'text-amber-400' : 'text-slate-300'
             }`}
           >
-            Neue Anfrage
+            {t('createRequest')}
           </Link>
           <Link
             href="/about"
@@ -95,7 +102,7 @@ export default function Header() {
               isActive('/about') ? 'text-amber-400' : 'text-slate-300'
             }`}
           >
-            Über uns
+            {t('about')}
           </Link>
           <Link
             href="/support"
@@ -103,7 +110,7 @@ export default function Header() {
               isActive('/support') ? 'text-amber-400' : 'text-slate-300'
             }`}
           >
-            ☕ Unterstützen
+            ☕ {t('support')}
           </Link>
           {user && (
             <Link
@@ -112,7 +119,7 @@ export default function Header() {
                 isActive('/settings') ? 'text-amber-400' : 'text-slate-300'
               }`}
             >
-              Einstellungen
+              {t('settings')}
             </Link>
           )}
           {isAdmin && (
@@ -123,13 +130,38 @@ export default function Header() {
               }`}
             >
               <Shield className="h-4 w-4" />
-              Admin
+              {t('admin')}
             </Link>
           )}
         </nav>
 
         {/* User Menu */}
         <div className="flex items-center space-x-4">
+          {/* Language Switcher */}
+          <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
+            <button
+              onClick={() => switchLanguage('de')}
+              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                locale === 'de' 
+                  ? 'bg-amber-500 text-slate-900' 
+                  : 'text-slate-400 hover:text-slate-300'
+              }`}
+              aria-label="Deutsch"
+            >
+              DE
+            </button>
+            <button
+              onClick={() => switchLanguage('en')}
+              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                locale === 'en' 
+                  ? 'bg-amber-500 text-slate-900' 
+                  : 'text-slate-400 hover:text-slate-300'
+              }`}
+              aria-label="English"
+            >
+              EN
+            </button>
+          </div>
           {loading ? (
             <div className="h-8 w-8 rounded-full bg-slate-700 animate-pulse" />
           ) : user ? (
@@ -156,7 +188,7 @@ export default function Header() {
               <button
                 onClick={handleSignOut}
                 className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
-                title="Abmelden"
+                title={t('logout')}
               >
                 <LogOut className="h-5 w-5 text-slate-400" />
               </button>
@@ -167,7 +199,7 @@ export default function Header() {
               className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 rounded-lg transition-all text-slate-900 font-semibold"
             >
               <LogIn className="h-4 w-4" />
-              <span>Anmelden</span>
+              <span>{t('login')}</span>
             </Link>
           )}
         </div>

@@ -1,17 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db, storage } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { AddonCategory, Priority } from '@/types';
 import { Loader2, Send, AlertCircle, Upload, X, Image as ImageIcon } from 'lucide-react';
-import Link from 'next/link';
-import { getCategoryLabel } from '@/lib/utils';
+import {Link, useRouter} from '@/i18n/routing';
+import {useTranslations} from 'next-intl';
 
 export default function CreateRequest() {
+  const t = useTranslations('create');
+  const tCategories = useTranslations('categories');
+  const tPriority = useTranslations('priority');
   const router = useRouter();
   const [user, loading] = useAuthState(auth);
   const [submitting, setSubmitting] = useState(false);
@@ -34,7 +36,7 @@ export default function CreateRequest() {
     
     // Limit to 5 screenshots
     if (screenshots.length + files.length > 5) {
-      setError('Maximal 5 Screenshots erlaubt.');
+      setError(t('errors.maxScreenshots'));
       return;
     }
 
@@ -44,11 +46,11 @@ export default function CreateRequest() {
       const isUnder5MB = file.size <= 5 * 1024 * 1024; // 5MB
       
       if (!isImage) {
-        setError(`${file.name} ist keine Bilddatei.`);
+        setError(t('errors.notImage', {name: file.name}));
         return false;
       }
       if (!isUnder5MB) {
-        setError(`${file.name} ist größer als 5MB.`);
+        setError(t('errors.fileTooLarge', {name: file.name}));
         return false;
       }
       return true;
@@ -97,17 +99,17 @@ export default function CreateRequest() {
     setError('');
 
     if (!user) {
-      setError('Du musst angemeldet sein, um eine Anfrage zu erstellen.');
+      setError(t('errors.loginRequired'));
       return;
     }
 
     if (formData.title.trim().length < 5) {
-      setError('Der Titel muss mindestens 5 Zeichen lang sein.');
+      setError(t('errors.titleTooShort'));
       return;
     }
 
     if (formData.description.trim().length < 20) {
-      setError('Die Beschreibung muss mindestens 20 Zeichen lang sein.');
+      setError(t('errors.descriptionTooShort'));
       return;
     }
 
@@ -174,7 +176,7 @@ export default function CreateRequest() {
       router.push(`/request-success?id=${docRef.id}`);
     } catch (err) {
       console.error('Error creating request:', err);
-      setError('Fehler beim Erstellen der Anfrage. Bitte versuche es erneut.');
+      setError(t('errors.createError'));
       setSubmitting(false);
       setUploadingScreenshots(false);
     }
@@ -193,12 +195,12 @@ export default function CreateRequest() {
       <div className="max-w-2xl mx-auto">
         <div className="wow-card p-12 text-center">
           <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-slate-100 mb-4">Anmeldung erforderlich</h2>
+          <h2 className="text-2xl font-bold text-slate-100 mb-4">{t('loginRequired')}</h2>
           <p className="text-slate-400 mb-6">
-            Du musst angemeldet sein, um eine AddOn-Anfrage zu erstellen.
+            {t('loginRequiredText')}
           </p>
           <Link href="/login" className="wow-button inline-block">
-            Jetzt anmelden
+            {t('loginNow')}
           </Link>
         </div>
       </div>
@@ -211,10 +213,9 @@ export default function CreateRequest() {
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-100 mb-2">Neue AddOn-Anfrage erstellen</h1>
+        <h1 className="text-3xl font-bold text-slate-100 mb-2">{t('title')}</h1>
         <p className="text-slate-400">
-          Beschreibe deine Idee für ein World of Warcraft AddOn. Die Community kann für deine Anfrage
-          stimmen und Kommentare hinterlassen.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -222,43 +223,43 @@ export default function CreateRequest() {
         {/* Title */}
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-slate-300 mb-2">
-            Titel <span className="text-red-400">*</span>
+            {t('titleLabel')} <span className="text-red-400">{t('required')}</span>
           </label>
           <input
             type="text"
             id="title"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            placeholder="z.B. Verbesserte Questlog-Übersicht"
+            placeholder={t('titlePlaceholder')}
             className="wow-input w-full"
             required
             maxLength={100}
           />
-          <p className="text-xs text-slate-500 mt-1">{formData.title.length}/100 Zeichen</p>
+          <p className="text-xs text-slate-500 mt-1">{t('titleChars', {count: formData.title.length})}</p>
         </div>
 
         {/* Description */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-slate-300 mb-2">
-            Beschreibung <span className="text-red-400">*</span>
+            {t('descriptionLabel')} <span className="text-red-400">{t('required')}</span>
           </label>
           <textarea
             id="description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Beschreibe detailliert, welche Funktionen das AddOn haben soll und welches Problem es löst..."
+            placeholder={t('descriptionPlaceholder')}
             className="wow-input w-full min-h-[200px] resize-y"
             required
             maxLength={2000}
           />
-          <p className="text-xs text-slate-500 mt-1">{formData.description.length}/2000 Zeichen</p>
+          <p className="text-xs text-slate-500 mt-1">{t('descriptionChars', {count: formData.description.length})}</p>
         </div>
 
         {/* Category and Priority */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-slate-300 mb-2">
-              Kategorie <span className="text-red-400">*</span>
+              {t('categoryLabel')} <span className="text-red-400">{t('required')}</span>
             </label>
             <select
               id="category"
@@ -269,7 +270,7 @@ export default function CreateRequest() {
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
-                  {getCategoryLabel(category)}
+                  {tCategories(category)}
                 </option>
               ))}
             </select>
@@ -277,7 +278,7 @@ export default function CreateRequest() {
 
           <div>
             <label htmlFor="priority" className="block text-sm font-medium text-slate-300 mb-2">
-              Priorität
+              {t('priorityLabel')}
             </label>
             <select
               id="priority"
@@ -285,9 +286,9 @@ export default function CreateRequest() {
               onChange={(e) => setFormData({ ...formData, priority: e.target.value as Priority })}
               className="wow-input w-full"
             >
-              <option value="low">Niedrig</option>
-              <option value="medium">Mittel</option>
-              <option value="high">Hoch</option>
+              <option value="low">{tPriority('low')}</option>
+              <option value="medium">{tPriority('medium')}</option>
+              <option value="high">{tPriority('high')}</option>
             </select>
           </div>
         </div>
@@ -295,25 +296,25 @@ export default function CreateRequest() {
         {/* Tags */}
         <div>
           <label htmlFor="tags" className="block text-sm font-medium text-slate-300 mb-2">
-            Tags (optional)
+            {t('tagsLabel')}
           </label>
           <input
             type="text"
             id="tags"
             value={formData.tags}
             onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-            placeholder="z.B. ui, quest, tracking (mit Komma trennen)"
+            placeholder={t('tagsPlaceholder')}
             className="wow-input w-full"
           />
           <p className="text-xs text-slate-500 mt-1">
-            Füge Tags hinzu, um deine Anfrage besser auffindbar zu machen
+            {t('tagsHint')}
           </p>
         </div>
 
         {/* Screenshots */}
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">
-            Screenshots (optional)
+            {t('screenshotsLabel')}
           </label>
           <div className="space-y-4">
             {/* Upload Button */}
@@ -324,7 +325,7 @@ export default function CreateRequest() {
                   className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg cursor-pointer transition-colors border-2 border-dashed border-slate-600 hover:border-amber-500"
                 >
                   <Upload className="h-5 w-5" />
-                  <span>Screenshots hochladen</span>
+                  <span>{t('screenshotsUpload')}</span>
                 </label>
                 <input
                   type="file"
@@ -336,7 +337,7 @@ export default function CreateRequest() {
                   disabled={submitting}
                 />
                 <p className="text-xs text-slate-500 mt-2">
-                  Maximal 5 Screenshots, je max. 5MB (PNG, JPG, WebP)
+                  {t('screenshotsHint')}
                 </p>
               </div>
             )}
@@ -370,7 +371,7 @@ export default function CreateRequest() {
             {uploadingScreenshots && (
               <div className="flex items-center gap-2 text-amber-400 text-sm">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Screenshots werden hochgeladen...</span>
+                <span>{t('screenshotsUploading')}</span>
               </div>
             )}
           </div>
@@ -394,17 +395,17 @@ export default function CreateRequest() {
             {submitting ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Wird erstellt...
+                {t('submitting')}
               </>
             ) : (
               <>
                 <Send className="h-5 w-5" />
-                Anfrage erstellen
+                {t('submit')}
               </>
             )}
           </button>
           <Link href="/" className="wow-button-secondary">
-            Abbrechen
+            {t('cancel')}
           </Link>
         </div>
       </form>
