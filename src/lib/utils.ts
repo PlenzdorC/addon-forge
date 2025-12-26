@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import { log } from "console";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -58,7 +59,8 @@ export function getStatusColor(status: string): string {
 
 // These functions are kept for backwards compatibility
 // New code should use useTranslations('status') and useTranslations('categories')
-export function getStatusLabel(status: string, locale: string = 'de'): string {
+export function getStatusLabel(status: string, locale: string ='de'): string {
+  console.log(locale);
   const labelsDE: Record<string, string> = {
     'requested': 'Angefragt',
     'in-progress': 'In Bearbeitung',

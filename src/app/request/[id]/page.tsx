@@ -31,7 +31,6 @@ import Link from 'next/link';
 
 export default function RequestDetail() {
   const params = useParams();
-  const locale = params.locale as string;
   const router = useRouter();
   const [user] = useAuthState(auth);
   const [request, setRequest] = useState<AddonRequest | null>(null);
@@ -307,14 +306,14 @@ export default function RequestDetail() {
             <div className="flex items-start justify-between gap-4 mb-4">
               <h1 className="text-3xl font-bold text-slate-100">{request.title}</h1>
               <span className={`status-badge ${getStatusColor(request.status)}`}>
-                {getStatusLabel(request.status, locale)}
+                {getStatusLabel(request.status)}
               </span>
             </div>
 
             {/* Meta Info */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mb-6">
               <span className={`category-badge ${getCategoryColor(request.category)}`}>
-                {getCategoryLabel(request.category, locale)}
+                {getCategoryLabel(request.category)}
               </span>
 
               <div className="flex items-center gap-1">

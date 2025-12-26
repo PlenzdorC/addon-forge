@@ -1,15 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Loader2, Save, User, Mail, Calendar, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function Settings() {
   const router = useRouter();
+  const params = useParams();
+  const locale = (params.locale as string) || 'de';
+  const t = useTranslations('settings');
   const [user, loading] = useAuthState(auth);
   const [displayName, setDisplayName] = useState('');
   const [originalDisplayName, setOriginalDisplayName] = useState('');
@@ -19,9 +23,9 @@ export default function Settings() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.push(`/${locale}/login`);
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, locale]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -51,22 +55,22 @@ export default function Settings() {
     setSuccess('');
 
     if (!displayName.trim()) {
-      setError('Bitte gib einen Benutzernamen ein.');
+      setError(t('errors.usernameRequired'));
       return;
     }
 
     if (displayName.trim().length < 3) {
-      setError('Der Benutzername muss mindestens 3 Zeichen lang sein.');
+      setError(t('errors.usernameTooShort'));
       return;
     }
 
     if (displayName.trim().length > 20) {
-      setError('Der Benutzername darf maximal 20 Zeichen lang sein.');
+      setError(t('errors.usernameTooLong'));
       return;
     }
 
     if (displayName.trim() === originalDisplayName) {
-      setError('Du hast keine Änderungen vorgenommen.');
+      setError(t('errors.noChanges'));
       return;
     }
 
@@ -95,11 +99,11 @@ export default function Settings() {
       }
 
       setOriginalDisplayName(displayName.trim());
-      setSuccess('Benutzername erfolgreich geändert!');
+      setSuccess(t('success.saved'));
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error('Error updating display name:', err);
-      setError('Fehler beim Speichern. Bitte versuche es erneut.');
+      setError(t('errors.saveError'));
     } finally {
       setSaving(false);
     }
@@ -116,13 +120,13 @@ export default function Settings() {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-100 mb-2">Einstellungen</h1>
-        <p className="text-slate-400">Verwalte dein Profil und deine Einstellungen</p>
+        <h1 className="text-3xl font-bold text-slate-100 mb-2">{t('title')}</h1>
+        <p className="text-slate-400">{t('subtitle')}</p>
       </div>
 
       {/* Profile Info */}
       <div className="wow-card p-8 mb-6">
-        <h2 className="text-xl font-bold text-slate-100 mb-6">Profil-Informationen</h2>
+        <h2 className="text-xl font-bold text-slate-100 mb-6">{t('profileInfo')}</h2>
 
         <div className="flex items-center gap-6 mb-8 pb-8 border-b border-slate-700">
           {user.photoURL ? (
@@ -146,7 +150,9 @@ export default function Settings() {
               <div className="flex items-center gap-2 text-slate-400 mt-1">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  Mitglied seit {new Date(user.metadata.creationTime).toLocaleDateString('de-DE')}
+                  {t('memberSince')} {new Date(user.metadata.creationTime).toLocaleDateString(
+                    locale === 'de' ? 'de-DE' : 'en-US'
+                  )}
                 </span>
               </div>
             )}
@@ -157,7 +163,7 @@ export default function Settings() {
         <form onSubmit={handleSave} className="space-y-6">
           <div>
             <label htmlFor="displayName" className="block text-sm font-medium text-slate-300 mb-2">
-              Benutzername
+              {t('username')}
             </label>
             <input
               type="text"
@@ -169,10 +175,10 @@ export default function Settings() {
               disabled={saving}
             />
             <p className="text-xs text-slate-500 mt-1">
-              {displayName.length}/20 Zeichen (min. 3)
+              {t('usernameChars', { count: displayName.length })}
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              Dieser Name wird öffentlich bei deinen Anfragen und Kommentaren angezeigt.
+              {t('usernameHint')}
             </p>
           </div>
 
@@ -198,18 +204,18 @@ export default function Settings() {
               {saving ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" />
-                  Wird gespeichert...
+                  {t('saving')}
                 </>
               ) : (
                 <>
                   <Save className="h-5 w-5" />
-                  Änderungen speichern
+                  {t('saveChanges')}
                 </>
               )}
             </button>
 
-            <Link href="/profile" className="wow-button-secondary">
-              Abbrechen
+            <Link href={`/${locale}/profile`} className="wow-button-secondary">
+              {t('cancel')}
             </Link>
           </div>
         </form>
@@ -217,18 +223,18 @@ export default function Settings() {
 
       {/* Account Info */}
       <div className="wow-card p-8">
-        <h2 className="text-xl font-bold text-slate-100 mb-4">Account-Informationen</h2>
+        <h2 className="text-xl font-bold text-slate-100 mb-4">{t('accountInfo')}</h2>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-slate-400">E-Mail:</span>
+            <span className="text-slate-400">{t('email')}</span>
             <span className="text-slate-200">{user.email}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Anbieter:</span>
-            <span className="text-slate-200">Google</span>
+            <span className="text-slate-400">{t('provider')}</span>
+            <span className="text-slate-200">{t('providerGoogle')}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">User-ID:</span>
+            <span className="text-slate-400">{t('userId')}</span>
             <span className="text-slate-200 font-mono text-xs">{user.uid}</span>
           </div>
         </div>

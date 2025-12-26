@@ -8,9 +8,11 @@ import AdminRoute from '@/components/AdminRoute';
 import { formatDate, getCategoryColor, getStatusColor, getStatusLabel, getCategoryLabel } from '@/lib/utils';
 import { Search, Filter, ArrowUpDown, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 
 function AdminRequestsContent() {
+  const params = useParams();
+  const locale = params.locale as string;
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get('status') as RequestStatus | null;
 
@@ -162,7 +164,7 @@ function AdminRequestsContent() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`status-badge ${getStatusColor(request.status)}`}>
-                        {getStatusLabel(request.status)}
+                        {getStatusLabel(request.status, locale)}
                       </span>
                     </td>
                     <td className="px-6 py-4">

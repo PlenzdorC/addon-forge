@@ -9,8 +9,11 @@ import FilterBar from '@/components/FilterBar';
 import { Loader2, Sparkles } from 'lucide-react';
 import {Link} from '@/i18n/routing';
 import {useTranslations} from 'next-intl';
+import { useParams } from 'next/navigation';
 
 export default function Home() {
+  const params = useParams();
+  const locale = params.locale as string;
   const t = useTranslations('home');
   const [requests, setRequests] = useState<AddonRequest[]>([]);
   const [loading, setLoading] = useState(true);

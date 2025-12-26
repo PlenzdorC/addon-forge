@@ -8,12 +8,15 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
 
 interface RequestCardProps {
   request: AddonRequest;
 }
 
 export default function RequestCard({ request }: RequestCardProps) {
+  const params = useParams();
+  const locale = params.locale as string;
   const [user] = useAuthState(auth);
   const [upvotes, setUpvotes] = useState(request.upvotes);
   const [hasUpvoted, setHasUpvoted] = useState(
@@ -94,7 +97,7 @@ export default function RequestCard({ request }: RequestCardProps) {
               </h3>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className={`status-badge ${getStatusColor(request.status)}`}>
-                  {getStatusLabel(request.status)}
+                  {getStatusLabel(request.status, locale)}
                 </span>
               </div>
             </div>
@@ -107,7 +110,7 @@ export default function RequestCard({ request }: RequestCardProps) {
             {/* Meta Information */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
               <span className={`category-badge ${getCategoryColor(request.category)}`}>
-                {getCategoryLabel(request.category)}
+                {getCategoryLabel(request.category, locale)}
               </span>
 
               <div className="flex items-center gap-1">
