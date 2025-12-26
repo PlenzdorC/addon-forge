@@ -89,6 +89,20 @@
       "createError": "Error creating request. Please try again."
     }
   },
+  "edit": {
+    "title": "Edit Request",
+    "subtitle": "Edit your AddOn request. Changes will be immediately visible to the community.",
+    "submit": "Save Changes",
+    "submitting": "Saving...",
+    "errors": {
+      "notOwner": "You can only edit your own requests.",
+      "notFound": "Request not found.",
+      "updateError": "Error updating request. Please try again."
+    },
+    "success": "Request successfully updated!",
+    "deleteScreenshot": "Delete screenshot",
+    "existingScreenshots": "Existing Screenshots"
+  },
   "request": {
     "upvote": "Upvote",
     "upvoted": "Upvoted",

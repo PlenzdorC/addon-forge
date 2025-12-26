@@ -89,6 +89,20 @@
       "createError": "Fehler beim Erstellen der Anfrage. Bitte versuche es erneut."
     }
   },
+  "edit": {
+    "title": "Anfrage bearbeiten",
+    "subtitle": "Bearbeite deine AddOn-Anfrage. Änderungen werden sofort für die Community sichtbar.",
+    "submit": "Änderungen speichern",
+    "submitting": "Wird gespeichert...",
+    "errors": {
+      "notOwner": "Du kannst nur deine eigenen Anfragen bearbeiten.",
+      "notFound": "Anfrage nicht gefunden.",
+      "updateError": "Fehler beim Aktualisieren der Anfrage. Bitte versuche es erneut."
+    },
+    "success": "Anfrage erfolgreich aktualisiert!",
+    "deleteScreenshot": "Screenshot löschen",
+    "existingScreenshots": "Vorhandene Screenshots"
+  },
   "request": {
     "upvote": "Upvote",
     "upvoted": "Upvoted",

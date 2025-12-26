@@ -26,10 +26,13 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Edit,
 } from 'lucide-react';
-import Link from 'next/link';
+import {Link} from '@/i18n/routing';
+import {useTranslations} from 'next-intl';
 
 export default function RequestDetail() {
+  const t = useTranslations('request');
   const params = useParams();
   const locale = params.locale as string;
   const router = useRouter();
@@ -198,6 +201,7 @@ export default function RequestDetail() {
   }
 
   const hasUpvoted = user ? request.upvotedBy?.includes(user.uid) : false;
+  const isOwner = user ? request.userId === user.uid : false;
 
   return (
     <>
@@ -208,13 +212,12 @@ export default function RequestDetail() {
           onClick={closeLightbox}
         >
           {/* Close button */}
-          <button
-            onClick={closeLightbox}
-            className="absolute top-4 right-4 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-lg transition-colors z-10"
-            aria-label="Schließen"
-          >
-            <X className="h-6 w-6 text-white" />
-          </button>
+            <button
+              onClick={closeLightbox}
+              className="absolute top-4 right-4 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-lg transition-colors z-10"
+            >
+              <X className="h-6 w-6 text-white" />
+            </button>
 
           {/* Image counter */}
           <div className="absolute top-4 left-4 px-4 py-2 bg-slate-800/80 rounded-lg text-white font-semibold z-10">
@@ -229,7 +232,6 @@ export default function RequestDetail() {
                 prevImage();
               }}
               className="absolute left-4 p-3 bg-slate-800/80 hover:bg-slate-700 rounded-lg transition-colors z-10"
-              aria-label="Vorheriges Bild"
             >
               <ChevronLeft className="h-8 w-8 text-white" />
             </button>
@@ -255,7 +257,6 @@ export default function RequestDetail() {
                 nextImage();
               }}
               className="absolute right-4 p-3 bg-slate-800/80 hover:bg-slate-700 rounded-lg transition-colors z-10"
-              aria-label="Nächstes Bild"
             >
               <ChevronRight className="h-8 w-8 text-white" />
             </button>
@@ -264,22 +265,33 @@ export default function RequestDetail() {
           {/* Keyboard hint */}
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-slate-800/80 rounded-lg text-slate-300 text-sm">
             <span className="hidden md:inline">
-              Nutze ← → für Navigation | ESC zum Schließen
+              {locale === 'de' ? 'Nutze ← → für Navigation | ESC zum Schließen' : 'Use ← → for navigation | ESC to close'}
             </span>
-            <span className="md:hidden">Tippe zum Schließen</span>
+            <span className="md:hidden">{locale === 'de' ? 'Tippe zum Schließen' : 'Tap to close'}</span>
           </div>
         </div>
       )}
 
       <div className="max-w-4xl mx-auto">
-      {/* Back Button */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-2 text-slate-400 hover:text-amber-400 transition-colors mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Zurück zur Übersicht
-      </Link>
+      {/* Back Button and Edit Button */}
+      <div className="flex items-center justify-between mb-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-amber-400 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t('backToHome')}
+        </Link>
+        {isOwner && (
+          <Link
+            href={`/edit/${requestId}`}
+            className="wow-button-secondary flex items-center gap-2"
+          >
+            <Edit className="h-4 w-4" />
+            {t('edit')}
+          </Link>
+        )}
+      </div>
 
       {/* Main Card */}
       <div className="wow-card p-8 mb-6">
@@ -294,7 +306,7 @@ export default function RequestDetail() {
                   ? 'bg-amber-500 text-slate-900'
                   : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
               } ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title={user ? (hasUpvoted ? 'Upvote entfernen' : 'Upvoten') : 'Anmelden zum Upvoten'}
+              title={user ? (hasUpvoted ? t('upvoted') : t('upvote')) : t('loginToUpvote')}
             >
               <ArrowBigUp className="h-6 w-6" />
             </button>
@@ -350,7 +362,7 @@ export default function RequestDetail() {
             {/* Screenshots */}
             {request.screenshots && request.screenshots.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-slate-200 mb-3">Screenshots</h3>
+                <h3 className="text-lg font-semibold text-slate-200 mb-3">{t('screenshots')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {request.screenshots.map((screenshot, index) => (
                     <button
@@ -365,7 +377,7 @@ export default function RequestDetail() {
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                         <span className="text-white opacity-0 group-hover:opacity-100 transition-opacity text-sm font-semibold">
-                          Vergrößern
+                          {locale === 'de' ? 'Vergrößern' : 'Enlarge'}
                         </span>
                       </div>
                     </button>
@@ -409,7 +421,7 @@ export default function RequestDetail() {
       <div className="wow-card p-8">
         <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center gap-2">
           <MessageCircle className="h-6 w-6 text-amber-500" />
-          Kommentare ({request.comments?.length || 0})
+          {t('comments')} ({request.comments?.length || 0})
         </h2>
 
         {/* Comment Form */}
@@ -418,12 +430,12 @@ export default function RequestDetail() {
             <textarea
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Schreibe einen Kommentar..."
+              placeholder={t('addComment')}
               className="wow-input w-full min-h-[100px] resize-y mb-4"
               maxLength={1000}
             />
             <div className="flex justify-between items-center">
-              <p className="text-xs text-slate-500">{commentText.length}/1000 Zeichen</p>
+              <p className="text-xs text-slate-500">{commentText.length}/1000 {locale === 'de' ? 'Zeichen' : 'characters'}</p>
               <button
                 type="submit"
                 disabled={!commentText.trim() || submittingComment}
@@ -432,12 +444,12 @@ export default function RequestDetail() {
                 {submittingComment ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Wird gesendet...
+                    {t('posting')}
                   </>
                 ) : (
                   <>
                     <Send className="h-4 w-4" />
-                    Kommentar senden
+                    {t('postComment')}
                   </>
                 )}
               </button>
@@ -446,10 +458,10 @@ export default function RequestDetail() {
         ) : (
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-8 text-center">
             <p className="text-slate-400 mb-4">
-              Du musst angemeldet sein, um Kommentare zu schreiben.
+              {t('loginToComment')}
             </p>
             <Link href="/login" className="wow-button inline-block">
-              Jetzt anmelden
+              {locale === 'de' ? 'Jetzt anmelden' : 'Login Now'}
             </Link>
           </div>
         )}
@@ -488,7 +500,7 @@ export default function RequestDetail() {
             ))
           ) : (
             <p className="text-slate-500 text-center py-8">
-              Noch keine Kommentare. Sei der Erste!
+              {t('noComments')}
             </p>
           )}
         </div>
