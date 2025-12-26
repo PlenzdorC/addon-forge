@@ -97,6 +97,14 @@ export default function Header() {
             {t('createRequest')}
           </Link>
           <Link
+            href="/news"
+            className={`text-sm font-medium transition-colors hover:text-amber-400 ${
+              isActive('/news') ? 'text-amber-400' : 'text-slate-300'
+            }`}
+          >
+            {t('news')}
+          </Link>
+          <Link
             href="/about"
             className={`text-sm font-medium transition-colors hover:text-amber-400 ${
               isActive('/about') ? 'text-amber-400' : 'text-slate-300'

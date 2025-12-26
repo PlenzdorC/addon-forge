@@ -56,7 +56,49 @@ export default function RequestDetail() {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          setRequest({ id: docSnap.id, ...docSnap.data() } as AddonRequest);
+          const requestData = { id: docSnap.id, ...docSnap.data() } as AddonRequest;
+          setRequest(requestData);
+          
+          // Update document title and meta tags dynamically
+          if (typeof window !== 'undefined') {
+            document.title = `${requestData.title} | AddOnForge`;
+            
+            // Update meta description
+            let metaDescription = document.querySelector('meta[name="description"]');
+            if (!metaDescription) {
+              metaDescription = document.createElement('meta');
+              metaDescription.setAttribute('name', 'description');
+              document.head.appendChild(metaDescription);
+            }
+            metaDescription.setAttribute('content', requestData.description.substring(0, 160));
+            
+            // Update Open Graph tags
+            let ogTitle = document.querySelector('meta[property="og:title"]');
+            if (!ogTitle) {
+              ogTitle = document.createElement('meta');
+              ogTitle.setAttribute('property', 'og:title');
+              document.head.appendChild(ogTitle);
+            }
+            ogTitle.setAttribute('content', requestData.title);
+            
+            let ogDescription = document.querySelector('meta[property="og:description"]');
+            if (!ogDescription) {
+              ogDescription = document.createElement('meta');
+              ogDescription.setAttribute('property', 'og:description');
+              document.head.appendChild(ogDescription);
+            }
+            ogDescription.setAttribute('content', requestData.description.substring(0, 160));
+            
+            if (requestData.screenshots && requestData.screenshots[0]) {
+              let ogImage = document.querySelector('meta[property="og:image"]');
+              if (!ogImage) {
+                ogImage = document.createElement('meta');
+                ogImage.setAttribute('property', 'og:image');
+                document.head.appendChild(ogImage);
+              }
+              ogImage.setAttribute('content', requestData.screenshots[0]);
+            }
+          }
         } else {
           router.push('/');
         }
@@ -211,8 +253,46 @@ export default function RequestDetail() {
   const hasUpvoted = user ? request.upvotedBy?.includes(user.uid) : false;
   const isOwner = user ? request.userId === user.uid : false;
 
+  // Structured Data for SEO
+  const structuredData = request ? {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": request.title,
+    "description": request.description,
+    "applicationCategory": "Game Addon",
+    "operatingSystem": "Windows, macOS",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": request.upvotes,
+      "reviewCount": request.comments?.length || 0
+    },
+    "datePublished": new Date(request.createdAt.seconds * 1000).toISOString(),
+    ...(request.updatedAt && {
+      "dateModified": new Date(request.updatedAt.seconds * 1000).toISOString()
+    }),
+    ...(request.githubRepo && {
+      "codeRepository": request.githubRepo
+    }),
+    ...(request.downloadUrl && {
+      "downloadUrl": request.downloadUrl
+    }),
+    ...(request.screenshots && request.screenshots.length > 0 && {
+      "screenshot": request.screenshots[0]
+    })
+  } : null;
+
   return (
     <>
+      {/* Structured Data (JSON-LD) for SEO */}
+      {structuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData)
+          }}
+        />
+      )}
+
       {/* Lightbox */}
       {lightboxIndex !== null && request?.screenshots && (
         <div

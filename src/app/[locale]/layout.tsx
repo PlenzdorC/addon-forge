@@ -11,9 +11,58 @@ import CookieBanner from "@/components/CookieBanner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AddOnForge - WoW AddOn Requests",
-  description: "Community platform for World of Warcraft AddOn requests. Inspired by WeakAuras.",
-  keywords: ["World of Warcraft", "WoW", "AddOn", "WeakAuras", "Midnight", "UI"],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://addon-forge.web.app'),
+  title: {
+    default: "AddOnForge - WoW AddOn Requests",
+    template: "%s | AddOnForge"
+  },
+  description: "Community platform for World of Warcraft AddOn requests. Request, vote, and discover the best WoW AddOns. Inspired by WeakAuras.",
+  keywords: [
+    "World of Warcraft",
+    "WoW",
+    "AddOn",
+    "WeakAuras",
+    "Midnight",
+    "UI",
+    "Interface",
+    "Gaming",
+    "Community",
+    "WoW UI",
+    "Game AddOn",
+    "WoW Mods"
+  ],
+  authors: [{ name: "AddOnForge Community" }],
+  creator: "AddOnForge",
+  publisher: "AddOnForge",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: process.env.NEXT_PUBLIC_BASE_URL || 'https://addon-forge.web.app',
+    siteName: 'AddOnForge',
+    title: 'AddOnForge - WoW AddOn Requests',
+    description: 'Community platform for World of Warcraft AddOn requests. Request, vote, and discover the best WoW AddOns.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AddOnForge - WoW AddOn Requests',
+    description: 'Community platform for World of Warcraft AddOn requests',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default async function LocaleLayout({
@@ -34,8 +83,17 @@ export default async function LocaleLayout({
   // side is the easiest way to get started
   const messages = await getMessages();
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://addon-forge.web.app';
+  const canonicalUrl = `${baseUrl}/${locale}`;
+
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head>
+        <link rel="canonical" href={canonicalUrl} />
+        <link rel="alternate" hrefLang="en" href={`${baseUrl}/en`} />
+        <link rel="alternate" hrefLang="de" href={`${baseUrl}/de`} />
+        <link rel="alternate" hrefLang="x-default" href={`${baseUrl}/en`} />
+      </head>
       <body className={`${inter.className} min-h-screen flex flex-col wow-gradient`}>
         <NextIntlClientProvider messages={messages}>
           <Header />

@@ -48,3 +48,18 @@ export interface User {
   createdAt: Timestamp;
 }
 
+export interface NewsArticle {
+  id: string;
+  title: string;
+  content: string;
+  excerpt: string;
+  coverImage?: string;
+  author: string;
+  authorId: string;
+  published: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  tags?: string[];
+  relatedAddons?: string[]; // IDs of related addon requests
+}
+

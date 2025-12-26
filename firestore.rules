@@ -43,6 +43,18 @@ service cloud.firestore {
       // Users can only write their own profile
       allow write: if isOwner(userId);
     }
+    
+    // News collection
+    match /news/{newsId} {
+      // Anyone can read published articles
+      allow read: if resource.data.published == true;
+      
+      // Admins can read all articles (including drafts)
+      allow read: if isAdmin();
+      
+      // Only admins can create, update, or delete articles
+      allow create, update, delete: if isAdmin();
+    }
   }
 }
 

@@ -19,7 +19,9 @@ Mit der Ankündigung von World of Warcraft: Midnight und der Einstellung von Wea
 - **Status-Tracking**: Verfolge den Entwicklungsfortschritt in Echtzeit
 - **Kommentare**: Diskutiere mit der Community über Anfragen
 - **Kategorien & Filter**: Finde schnell relevante AddOn-Anfragen
+- **News-Seite**: Entdecke die neuesten fertiggestellten AddOns
 - **Benutzer-Profile**: Verwalte deine eigenen Anfragen
+- **Mehrsprachig**: Vollständige Unterstützung für Deutsch und Englisch
 - **Responsive Design**: Funktioniert auf allen Geräten
 
 ### Für Admins
@@ -34,6 +36,8 @@ Mit der Ankündigung von World of Warcraft: Midnight und der Einstellung von Wea
 - **Frontend**: Next.js 15 mit React & TypeScript
 - **Styling**: Tailwind CSS mit WoW-inspiriertem Dark Theme
 - **Backend**: Firebase (Firestore, Authentication, Storage)
+- **i18n**: next-intl für Mehrsprachigkeit (DE/EN)
+- **SEO**: Dynamische Metadata, Sitemap, Robots.txt, Schema.org
 - **Deployment**: Firebase Hosting (oder Vercel)
 
 ## 📦 Installation
@@ -57,18 +61,19 @@ npm install
    - Aktiviere Storage (optional für Screenshots)
 
 4. **Umgebungsvariablen konfigurieren**
-```bash
-cp .env.local.example .env.local
-```
 
-Fülle die `.env.local` mit deinen Firebase-Credentials:
+Erstelle eine `.env.local` Datei mit deinen Firebase-Credentials:
 ```env
+# Firebase Configuration
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+# SEO Configuration (wichtig für Sitemap und Canonical URLs)
+NEXT_PUBLIC_BASE_URL=https://your-domain.com
 ```
 
 5. **Firestore-Regeln einrichten**
@@ -172,6 +177,21 @@ Das Design ist inspiriert von World of Warcraft mit:
 - Google Sign-In ist aktiviert
 - Weitere Provider können einfach hinzugefügt werden
 
+## 🔍 SEO-Features
+
+Das Projekt ist vollständig SEO-optimiert:
+
+- ✅ **Dynamische Metadata**: Jede Seite hat optimierte Titel und Beschreibungen
+- ✅ **Sitemap.xml**: Automatisch generiert unter `/sitemap.xml`
+- ✅ **Robots.txt**: Konfiguriert unter `/robots.txt`
+- ✅ **Schema.org Markup**: Strukturierte Daten für bessere Suchmaschinen-Integration
+- ✅ **Open Graph & Twitter Cards**: Optimierte Social Media Previews
+- ✅ **Canonical URLs**: Vermeidung von Duplicate Content
+- ✅ **hreflang Tags**: Mehrsprachige SEO-Optimierung
+- ✅ **Performance**: Kompression, Image-Optimierung, Security Headers
+
+📖 Siehe `SEO_IMPLEMENTATION.md` für Details und nächste Schritte.
+
 ## 🚢 Deployment
 
 ### Firebase Hosting
@@ -184,12 +204,19 @@ npm run build
 firebase deploy
 ```
 
+Nach dem Deployment:
+1. Setze `NEXT_PUBLIC_BASE_URL` auf deine echte Domain
+2. Reiche die Sitemap bei Google Search Console ein
+3. Teste mit Google PageSpeed Insights
+
 ### Vercel
 
 ```bash
 npm install -g vercel
 vercel
 ```
+
+Vercel setzt automatisch die richtige BASE_URL.
 
 ## 🤝 Beitragen
 

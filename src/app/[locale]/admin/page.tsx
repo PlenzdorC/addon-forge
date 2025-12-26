@@ -21,7 +21,7 @@ import { useTranslations } from 'next-intl';
 export default function AdminDashboard() {
   const [requests, setRequests] = useState<AddonRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const t = useTranslations('create');
+  const tStatus = useTranslations('status');
 
   useEffect(() => {
     const q = query(collection(db, 'requests'));
@@ -111,23 +111,23 @@ export default function AdminDashboard() {
             <h3 className="text-lg font-semibold text-slate-100 mb-4">Status Übersicht</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">{t('status.requested')}</span>
+                <span className="text-slate-400">{tStatus('requested')}</span>
                 <span className="text-slate-200 font-semibold">{stats.requested}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">{t('status.in-progress')}</span>
+                <span className="text-slate-400">{tStatus('in-progress')}</span>
                 <span className="text-amber-400 font-semibold">{stats.inProgress}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">{t('status.completed')}</span>
+                <span className="text-slate-400">{tStatus('completed')}</span>
                 <span className="text-green-400 font-semibold">{stats.completed}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">{t('status.rejected')}</span>
+                <span className="text-slate-400">{tStatus('rejected')}</span>
                 <span className="text-red-400 font-semibold">{stats.rejected}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">{t('status.analyzing')}</span>
+                <span className="text-slate-400">{tStatus('analyzing')}</span>
                 <span className="text-sky-400 font-semibold">{stats.analyzing}</span>
               </div>
             </div>
@@ -159,6 +159,12 @@ export default function AdminDashboard() {
                 className="wow-button-secondary text-center"
               >
                 Wird analysiert
+              </Link>
+              <Link
+                href="/admin/news"
+                className="wow-button-secondary text-center bg-amber-900/20 hover:bg-amber-900/30 border-amber-700"
+              >
+                📰 News verwalten
               </Link>
               <Link
                 href="/"
